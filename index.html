@@ -900,7 +900,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 // ════════════════════════════════════════════════════════
 // 설정 - Google Apps Script URL을 여기에 입력하세요
 // ════════════════════════════════════════════════════════
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxYZPYVrT1Mr_0uX2sYwXVAv88tBt1DQawYvJWNbcTaFopOuWjcpTT128aKIy_USu6/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbySoLZNmxXqlwDd1vttjhxeob3TGG0FH33DF1ljs8GItRXUOIWOnsVD6xlJVzzh2U-1yQ/exec';
 // 예시: 'https://script.google.com/macros/s/AKfycb.../exec'
 
 // ════════════════════════════════════════════════════════
@@ -1255,19 +1255,13 @@ async function submitSurvey() {
   };
 
   try {
-    if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbySoLZNmxXqlwDd1vttjhxeob3TGG0FH33DF1ljs8GItRXUOIWOnsVD6xlJVzzh2U-1yQ/exec') {
+    // Google Apps Script로 실제 저장
       const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         body: JSON.stringify(payload),
       });
       const json = await res.json();
       if (json.status !== 'ok') throw new Error(json.message);
-    } else {
-      // 데모 모드: localStorage에 저장
-      const existing = JSON.parse(localStorage.getItem('surveyData') || '[]');
-      existing.push({ ...payload, timestamp: new Date().toISOString() });
-      localStorage.setItem('surveyData', JSON.stringify(existing));
-    }
     document.getElementById('doneScreen').classList.add('show');
   } catch (err) {
     console.error(err);

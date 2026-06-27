@@ -472,24 +472,9 @@ async function loadData() {
   document.getElementById('loadingOverlay').classList.remove('hide');
   try {
     let data;
-    if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycbwxYZPYVrT1Mr_0uX2sYwXVAv88tBt1DQawYvJWNbcTaFopOuWjcpTT128aKIy_USu6/exec') {
+    // Google Apps Script에서 실제 데이터 조회
       const res = await fetch(APPS_SCRIPT_URL + '?t=' + Date.now());
       data = await res.json();
-    } else {
-      // localStorage 확인
-      const stored = localStorage.getItem('surveyData');
-      if (stored) {
-        const arr = JSON.parse(stored);
-        if (arr.length > 0) {
-          // localStorage 데이터를 요약 형식으로 변환
-          data = buildSummaryFromLocal(arr);
-        } else {
-          data = generateDummyData();
-        }
-      } else {
-        data = generateDummyData();
-      }
-    }
     currentData = data;
     renderAll(data.summary || data);
     document.getElementById('lastUpdated').textContent = '마지막 업데이트: ' + new Date().toLocaleTimeString('ko-KR');
