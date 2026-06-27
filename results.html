@@ -252,7 +252,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   <p class="dash-sub">실시간 설문 결과 대시보드 · 익명 응답 기반</p>
   <div class="live-count">
     <div class="live-dot"></div>
-    <span>총 응답자 <strong id="totalCount">-</strong>명</span>
+    <span>총 <strong id="totalCount">-</strong>명 응답</span>
   </div>
 </header>
 
@@ -468,36 +468,41 @@ function generateDummyData() {
 let currentData = null;
 const charts = {};
 
+// GAS fetch 헬퍼 (재시도 3회)
+async function fetchGAS(url, retries=3) {
+  for (let i=0; i<retries; i++) {
+    try {
+      const res = await fetch(url + '?t=' + Date.now(), {
+        method:'GET', redirect:'follow',
+        cache:'no-store',
+      });
+      const text = await res.text();
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('JSON 없음');
+      return JSON.parse(match[0]);
+    } catch(e) {
+      console.warn('GAS 시도 '+(i+1)+' 실패:', e.message);
+      if (i < retries-1) await new Promise(r=>setTimeout(r, 1200*(i+1)));
+      else throw e;
+    }
+  }
+}
+
 async function loadData() {
   document.getElementById('loadingOverlay').classList.remove('hide');
   try {
-    let data;
-    // Google Apps Script에서 실제 데이터 조회
-    const res = await fetch(APPS_SCRIPT_URL + '?t=' + Date.now(), {
-      method: 'GET',
-      redirect: 'follow',
-    });
-    const text = await res.text();
-    console.log('[결과페이지] GAS 응답 상태:', res.status, res.statusText);
-    console.log('[결과페이지] GAS 응답 앞부분:', text.substring(0, 200));
-    // JSON 부분 추출
-    let jsonStr = text;
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) jsonStr = jsonMatch[0];
-    data = JSON.parse(jsonStr);
-    console.log('[결과페이지] 파싱 성공, 응답자 수:', data.count);
-    console.log('[결과페이지] rows 샘플:', data.rows && data.rows[0]);
+    const data = await fetchGAS(APPS_SCRIPT_URL);
     currentData = data;
-    // summary에 rows 주입 (Q6 레이더, Q9 와이파이 등 개별 행 분석용)
     const summaryWithRows = Object.assign({}, data.summary || data, { rows: data.rows || [] });
     renderAll(summaryWithRows);
     document.getElementById('lastUpdated').textContent = '마지막 업데이트: ' + new Date().toLocaleTimeString('ko-KR');
   } catch (e) {
-    console.error('API 오류:', e);
-    // 오류 시 빈 데이터로 표시 (더미데이터 사용 안 함)
-    document.getElementById('totalCount').textContent = '오류';
+    console.error('API 최종 실패:', e);
+    document.getElementById('totalCount').textContent = '-';
     document.getElementById('kpiTotal').textContent = '-';
-    document.getElementById('lastUpdated').textContent = '⚠️ 데이터 로드 실패 - 잠시 후 재시도';
+    document.getElementById('lastUpdated').textContent = '🔄 잠시 후 자동으로 재시도합니다';
+    // 15초 후 자동 재시도
+    setTimeout(loadData, 15000);
   } finally {
     setTimeout(() => document.getElementById('loadingOverlay').classList.add('hide'), 600);
   }
@@ -706,90 +711,54 @@ function renderCommentNetwork(comments) {
     document.getElementById('commentNetwork').innerHTML = '<div class="empty-state"><div class="empty-icon">✍️</div><div class="empty-text">한 줄 의견이 아직 없습니다.</div></div>';
     return;
   }
-
   const container = document.getElementById('commentNetwork');
-
-  // 노드 구성: 중앙(오늘 강의) + 부서 노드 + 의견 노드
   const nodes = new vis.DataSet();
   const edges = new vis.DataSet();
+  const BUBBLE_COLORS  = ['#E3F2FD','#E8F5E9','#FFF8E1','#FCE4EC','#F3E5F5','#E0F7FA','#FBE9E7','#F9FBE7'];
+  const BUBBLE_BORDERS = ['#0068B7','#4CAF50','#FF9800','#F44336','#9C27B0','#00BCD4','#FF5722','#8BC34A'];
 
-  // ── 중앙 노드 (크고 선명하게)
+  function getDeptIcon(dept) {
+    if (!dept) return '🌊';
+    if (dept.includes('IT') || dept.includes('디지털') || dept.includes('정보')) return '💻';
+    if (dept.includes('기획') || dept.includes('경영')) return '📊';
+    if (dept.includes('교육') || dept.includes('회원') || dept.includes('어업')) return '🎓';
+    if (dept.includes('경제') || dept.includes('유통') || dept.includes('무역')) return '🚢';
+    if (dept.includes('금융') || dept.includes('공제') || dept.includes('보험')) return '🏦';
+    if (dept.includes('리스크') || dept.includes('감사') || dept.includes('준법')) return '🔍';
+    return '🌊';
+  }
+
+  // 중앙 노드
   nodes.add({
     id:'center', label:'🎣 오늘 강의', shape:'ellipse',
     color:{background:'#004098', border:'#00A0E9', highlight:{background:'#0068B7',border:'#9FD9F6'}},
-    font:{color:'white', size:17, bold:true}, size:52,
-    shadow:{enabled:true, color:'rgba(0,64,152,0.4)', size:12, x:3, y:3}
+    font:{color:'white', size:16, bold:true}, size:54,
+    shadow:{enabled:true, color:'rgba(0,64,152,0.45)', size:14, x:3, y:4},
+    x:0, y:0
   });
 
-  // ── 부서 노드 (다이아몬드, 부서명 2줄)
+  // 부서 노드 (드래그 가능, fixed 없음)
   const depts = [...new Set(comments.map(c=>c.dept).filter(Boolean))];
+  const deptR = 190;
   depts.forEach((d,i) => {
-    const shortLabel = d.length > 5 ? d.substring(0,5)+'\n…' : d;
+    const angle = (2*Math.PI/depts.length)*i - Math.PI/2;
+    const icon  = getDeptIcon(d);
+    const short = d.length > 5 ? d.substring(0,5)+'…' : d;
     nodes.add({
-      id:'dept_'+i, label:shortLabel, shape:'diamond',
-      color:{background: DEPT_COLORS[d]||'#8E9BAE', border:'white',
-             highlight:{background:'#00A0E9',border:'white'}},
-      font:{color:'white', size:12, bold:true}, size:30,
-      shadow:{enabled:true, color:'rgba(0,0,0,0.2)', size:8, x:2, y:2}
+      id:'dept_'+i, label:icon+' '+short, shape:'ellipse',
+      color:{background:DEPT_COLORS[d]||'#5a7a9a', border:'rgba(255,255,255,0.8)',
+             highlight:{background:'#00A0E9', border:'white'}},
+      font:{color:'white', size:12, bold:true}, size:34,
+      shadow:{enabled:true, color:'rgba(0,0,0,0.25)', size:8, x:2, y:3},
+      x:Math.cos(angle)*deptR, y:Math.sin(angle)*deptR
     });
     edges.add({ from:'center', to:'dept_'+i,
-      color:{color:'rgba(0,104,183,0.5)', highlight:'#0068B7'},
-      width:2.5, dashes:[6,4],
-      smooth:{type:'curvedCW', roundness:0.2}
+      color:{color:'rgba(0,104,183,0.4)', highlight:'#0068B7'},
+      width:2.5, dashes:[8,4], smooth:{type:'dynamic'}
     });
   });
 
-  // ── 의견 노드 (말풍선 스타일, 전체 텍스트)
-  const BUBBLE_COLORS = ['#E3F2FD','#E8F5E9','#FFF8E1','#FCE4EC','#F3E5F5','#E0F7FA','#FBE9E7','#F9FBE7'];
-  const BUBBLE_BORDERS = ['#0068B7','#4CAF50','#FF9800','#F44336','#9C27B0','#00BCD4','#FF5722','#8BC34A'];
-  comments.forEach((c,i) => {
-    const deptIdx = depts.indexOf(c.dept);
-    const nodeId  = 'comment_'+i;
-    const bg  = BUBBLE_COLORS[i % BUBBLE_COLORS.length];
-    const brd = DEPT_COLORS[c.dept] || BUBBLE_BORDERS[i % BUBBLE_BORDERS.length];
-    nodes.add({
-      id:nodeId,
-      label: '"' + c.text + '"',
-      shape:'box',
-      color:{background:bg, border:brd, highlight:{background:'#dceefb',border:'#0068B7'}},
-      font:{size:13, color:'#1a2744', bold:false},
-      borderWidth:2.5, borderWidthSelected:4,
-      margin:10,
-      shadow:{enabled:true, color:'rgba(0,0,0,0.12)', size:6, x:2, y:2}
-    });
-    const srcId = deptIdx >= 0 ? 'dept_'+deptIdx : 'center';
-    edges.add({
-      from:srcId, to:nodeId,
-      color:{color: brd+'99', highlight: brd},
-      width:1.8,
-      smooth:{type:'dynamic'}
-    });
-  });
-
-  const options = {
-    physics:{ enabled:false },
-    interaction:{ hover:true, zoomView:false, dragView:true },
-    layout:{ improvedLayout:false },
-    edges:{ smooth:{ enabled:true, type:'curvedCW', roundness:0.15 } },
-    nodes:{ chosen:true }
-  };
-
-  // ── 좌표 직접 계산 (원형 배치) ──────────────
-  // 중앙
-  nodes.update({ id:'center', x:0, y:0, fixed:true });
-
-  // 부서 노드: 중앙 기준 원형
-  const deptR = 180;
-  depts.forEach((d,i) => {
-    const angle = (2 * Math.PI / depts.length) * i - Math.PI/2;
-    nodes.update({ id:'dept_'+i,
-      x: Math.cos(angle)*deptR,
-      y: Math.sin(angle)*deptR,
-      fixed:true
-    });
-  });
-
-  // 의견 노드: 각 부서 주변 배치
+  // 의견 노드 (말풍선, 드래그 가능)
   const commentsByDept = {};
   comments.forEach((c,i) => {
     const deptIdx = depts.indexOf(c.dept);
@@ -797,39 +766,60 @@ function renderCommentNetwork(comments) {
     if (!commentsByDept[key]) commentsByDept[key] = [];
     commentsByDept[key].push(i);
   });
-  const commentR = 320;
+  const commentR = 340;
   Object.entries(commentsByDept).forEach(([dKey, idxArr]) => {
     const di = parseInt(dKey);
-    const baseAngle = isNaN(di) ? 0 : (2*Math.PI/depts.length)*di - Math.PI/2;
+    const baseAngle = isNaN(di) ? Math.PI/4 : (2*Math.PI/depts.length)*di - Math.PI/2;
     idxArr.forEach((ci, j) => {
-      const spread = (idxArr.length > 1) ? (j/(idxArr.length-1)-0.5)*0.7 : 0;
+      const spread = idxArr.length > 1 ? (j/(idxArr.length-1)-0.5)*0.65 : 0;
       const angle  = baseAngle + spread;
-      nodes.update({ id:'comment_'+ci,
-        x: Math.cos(angle)*commentR,
-        y: Math.sin(angle)*commentR,
+      const c2     = comments[ci];
+      const bg     = BUBBLE_COLORS[ci % BUBBLE_COLORS.length];
+      const brd    = DEPT_COLORS[c2.dept] || BUBBLE_BORDERS[ci % BUBBLE_BORDERS.length];
+      nodes.add({
+        id:'comment_'+ci, label:'✏️  '+c2.text, shape:'box',
+        color:{background:bg, border:brd, highlight:{background:'#dceefb',border:'#0068B7'}},
+        font:{size:13, color:'#1a2744', bold:true},
+        borderWidth:2.5, borderWidthSelected:4,
+        margin:{top:10, right:14, bottom:10, left:14},
+        shadow:{enabled:true, color:'rgba(0,0,0,0.1)', size:6, x:2, y:3},
+        x:Math.cos(angle)*commentR, y:Math.sin(angle)*commentR
+      });
+      const srcId = isNaN(di) ? 'center' : 'dept_'+di;
+      edges.add({ from:srcId, to:'comment_'+ci,
+        color:{color:brd+'88', highlight:brd},
+        width:1.8, smooth:{type:'curvedCW', roundness:0.15}
       });
     });
   });
 
-  const network = new vis.Network(container, { nodes, edges }, options);
-  setTimeout(() => network.fit({ animation:false }), 100);
+  const options = {
+    physics:{ enabled:false },
+    interaction:{ hover:true, dragNodes:true, dragView:true, zoomView:true },
+    layout:{ improvedLayout:false },
+    edges:{ smooth:{enabled:true} },
+    nodes:{ chosen:true }
+  };
 
-  // ── 하단 의견 카드 리스트 (개선)
+  const network = new vis.Network(container, { nodes, edges }, options);
+  setTimeout(() => network.fit({ animation:{duration:400, easingFunction:'easeOutQuad'} }), 80);
+
+  // 하단 의견 카드 (익명 제거)
   const listEl = document.getElementById('commentList');
   listEl.innerHTML = comments.map((c,i) => {
-    const brd = DEPT_COLORS[c.dept] || BUBBLE_BORDERS[i % BUBBLE_BORDERS.length];
-    return '<div class="timeline-item" style="border-left:3px solid '+brd+';padding-left:12px;border-bottom:1px solid #f0f5fb;padding-bottom:10px;">'
-      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">'
-      + '<span style="font-size:11px;font-weight:700;color:white;background:'+brd+';border-radius:6px;padding:2px 8px;flex-shrink:0">'+(c.dept||'기타').substring(0,6)+'</span>'
-      + '<span style="font-size:11px;color:#8E9BAE;">익명</span>'
-      + '</div>'
-      + '<div style="font-size:14px;color:#1a2744;font-weight:500;line-height:1.5">'
-      + '오늘 강의는 나에게 <span style="color:'+brd+';font-weight:700;font-size:15px;">"'+c.text+'"</span> 이었다.'
+    const brd  = DEPT_COLORS[c.dept] || BUBBLE_BORDERS[i % BUBBLE_BORDERS.length];
+    const icon = getDeptIcon(c.dept||'');
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 4px;border-bottom:1px solid #f0f5fb;">'
+      + '<span style="font-size:20px;flex-shrink:0;margin-top:2px;">'+icon+'</span>'
+      + '<div style="flex:1;">'
+      +   '<span style="font-size:11px;font-weight:700;color:white;background:'+brd+';border-radius:20px;padding:3px 10px;display:inline-block;margin-bottom:6px;">'+(c.dept||'기타').substring(0,8)+'</span>'
+      +   '<div style="font-size:14px;color:#1a2744;line-height:1.6;">'
+      +     '오늘 강의는 나에게 <strong style="color:'+brd+';font-size:15px;">&ldquo;'+c.text+'&rdquo;</strong> 이었다.'
+      +   '</div>'
       + '</div>'
       + '</div>';
   }).join('');
 }
-
 // ── 부서별 적용 가능성 레이더 ─────────────────
 function renderChanceByDept(rows) {
   destroyChart('chanceByDeptChart');
@@ -944,8 +934,8 @@ function destroyChart(id) {
 // ── 초기화 ─────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   loadData();
-  // 30초마다 자동 새로고침
-  setInterval(loadData, 30000);
+  // 60초마다 자동 새로고침
+  setInterval(loadData, 60000);
 });
 </script>
 </body>
