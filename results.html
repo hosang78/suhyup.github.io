@@ -767,18 +767,52 @@ function renderCommentNetwork(comments) {
   });
 
   const options = {
-    physics:{
-      stabilization:{iterations:200, fit:true},
-      barnesHut:{ gravitationalConstant:-5000, springLength:160, springConstant:0.04, damping:0.15 }
-    },
-    interaction:{ hover:true, tooltipDelay:100, zoomView:true, dragView:true },
-    layout:{ improvedLayout:true, randomSeed:42 },
-    edges:{ smooth:{ type:'dynamic' }, arrows:{} },
+    physics:{ enabled:false },
+    interaction:{ hover:true, zoomView:false, dragView:true },
+    layout:{ improvedLayout:false },
+    edges:{ smooth:{ enabled:true, type:'curvedCW', roundness:0.15 } },
     nodes:{ chosen:true }
   };
 
+  // ── 좌표 직접 계산 (원형 배치) ──────────────
+  // 중앙
+  nodes.update({ id:'center', x:0, y:0, fixed:true });
+
+  // 부서 노드: 중앙 기준 원형
+  const deptR = 180;
+  depts.forEach((d,i) => {
+    const angle = (2 * Math.PI / depts.length) * i - Math.PI/2;
+    nodes.update({ id:'dept_'+i,
+      x: Math.cos(angle)*deptR,
+      y: Math.sin(angle)*deptR,
+      fixed:true
+    });
+  });
+
+  // 의견 노드: 각 부서 주변 배치
+  const commentsByDept = {};
+  comments.forEach((c,i) => {
+    const deptIdx = depts.indexOf(c.dept);
+    const key = deptIdx >= 0 ? deptIdx : 'none';
+    if (!commentsByDept[key]) commentsByDept[key] = [];
+    commentsByDept[key].push(i);
+  });
+  const commentR = 320;
+  Object.entries(commentsByDept).forEach(([dKey, idxArr]) => {
+    const di = parseInt(dKey);
+    const baseAngle = isNaN(di) ? 0 : (2*Math.PI/depts.length)*di - Math.PI/2;
+    idxArr.forEach((ci, j) => {
+      const spread = (idxArr.length > 1) ? (j/(idxArr.length-1)-0.5)*0.7 : 0;
+      const angle  = baseAngle + spread;
+      nodes.update({ id:'comment_'+ci,
+        x: Math.cos(angle)*commentR,
+        y: Math.sin(angle)*commentR,
+      });
+    });
+  });
+
   const network = new vis.Network(container, { nodes, edges }, options);
-  network.once('stabilized', () => { network.fit({ animation:{ duration:600, easingFunction:'easeInOutQuad' } }); });
+  setTimeout(() => network.fit({ animation:false }), 100);
 
   // ── 하단 의견 카드 리스트 (개선)
   const listEl = document.getElementById('commentList');
