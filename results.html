@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 강의 설문 결과 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<!-- Vis Network -->
+<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.9/standalone/umd/vis-network.min.js"></script>
+<style>
+:root{
+  --blue:#0068B7;--deep:#004098;--sky:#00A0E9;--pale:#9FD9F6;
+  --gold:#A39161;--silver:#8E9BAE;--white:#fff;--bg:#f0f7ff;
+  --card:#fff;--text:#1a2744;--sub:#5a7a9a;
+  --r:16px;--sh:0 6px 24px rgba(0,104,183,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);}
+
+/* 헤더 */
+.dash-header{
+  background:linear-gradient(135deg,var(--deep) 0%,var(--blue) 60%,var(--sky) 100%);
+  color:white;padding:40px 20px 50px;text-align:center;position:relative;overflow:hidden;
+}
+.dash-header::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 70% 50%, rgba(0,160,233,0.3) 0%, transparent 70%);
+}
+.dash-badge{
+  display:inline-block;background:rgba(255,255,255,0.15);
+  border:1px solid rgba(255,255,255,0.3);border-radius:50px;
+  padding:5px 16px;font-size:12px;font-weight:600;margin-bottom:14px;
+}
+.dash-title{font-size:clamp(20px,4vw,30px);font-weight:900;margin-bottom:8px;}
+.dash-sub{font-size:14px;opacity:0.8;}
+.live-count{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(255,255,255,0.2);border-radius:50px;
+  padding:8px 20px;margin-top:16px;font-size:14px;font-weight:600;
+}
+.live-dot{
+  width:8px;height:8px;background:#4cff91;border-radius:50%;
+  animation:pulse-dot 1.5s ease-in-out infinite;
+}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.4)}}
+
+/* 새로고침 */
+.refresh-bar{
+  background:white;border-bottom:2px solid var(--pale);
+  padding:12px 20px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  position:sticky;top:0;z-index:100;
+  backdrop-filter:blur(8px);
+}
+.refresh-btn{
+  padding:8px 20px;background:var(--blue);color:white;
+  border:none;border-radius:50px;font-size:13px;font-weight:600;font-family:inherit;
+  cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:6px;
+}
+.refresh-btn:hover{background:var(--deep);transform:scale(1.03);}
+.last-updated{font-size:12px;color:var(--sub);}
+.survey-link{
+  padding:8px 16px;background:var(--gold);color:white;
+  border-radius:50px;font-size:12px;font-weight:600;text-decoration:none;
+  transition:opacity 0.2s;
+}
+.survey-link:hover{opacity:0.85;}
+
+/* 그리드 */
+.dash-grid{
+  max-width:1100px;margin:0 auto;
+  padding:24px 16px 60px;
+  display:grid;
+  grid-template-columns:repeat(12,1fr);
+  gap:18px;
+}
+
+/* 카드 기본 */
+.d-card{
+  background:var(--white);border-radius:var(--r);
+  box-shadow:var(--sh);padding:22px;
+  position:relative;overflow:hidden;
+}
+.d-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--blue),var(--sky));
+}
+.c-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--blue);text-transform:uppercase;margin-bottom:6px;}
+.c-title{font-size:15px;font-weight:700;color:var(--deep);margin-bottom:16px;}
+
+/* 그리드 span */
+.span-4{grid-column:span 4;}
+.span-6{grid-column:span 6;}
+.span-8{grid-column:span 8;}
+.span-12{grid-column:span 12;}
+.span-3{grid-column:span 3;}
+@media(max-width:900px){
+  .span-4,.span-6,.span-8,.span-3{grid-column:span 6;}
+  .span-12{grid-column:span 12;}
+}
+@media(max-width:580px){
+  .span-4,.span-6,.span-8,.span-3,.span-12{grid-column:span 12;}
+}
+
+/* KPI 박스 */
+.kpi-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+  grid-column:span 12;
+}
+@media(max-width:700px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+.kpi-card{
+  background:white;border-radius:var(--r);box-shadow:var(--sh);
+  padding:20px 16px;text-align:center;position:relative;overflow:hidden;
+}
+.kpi-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:4px;
+}
+.kpi-card.blue::after{background:var(--blue);}
+.kpi-card.gold::after{background:var(--gold);}
+.kpi-card.red::after{background:#FF3366;}
+.kpi-card.green::after{background:#4caf50;}
+.kpi-icon{font-size:28px;margin-bottom:8px;}
+.kpi-val{font-size:32px;font-weight:900;line-height:1;margin-bottom:4px;}
+.kpi-val.blue{color:var(--blue);}
+.kpi-val.gold{color:var(--gold);}
+.kpi-val.red{color:#FF3366;}
+.kpi-val.green{color:#4caf50;}
+.kpi-label{font-size:12px;color:var(--sub);font-weight:500;}
+
+/* 부서 도넛 */
+.dept-chart-wrap{height:220px;position:relative;}
+
+/* 상여금 게이지 */
+.salary-big{
+  text-align:center;padding:10px 0 16px;
+}
+.salary-num{
+  font-size:48px;font-weight:900;color:var(--gold);line-height:1;
+}
+.salary-sub{font-size:14px;color:var(--sub);margin-top:4px;}
+.salary-meter{
+  height:16px;background:#f0f0f0;border-radius:8px;overflow:hidden;margin-top:12px;
+}
+.salary-meter-fill{
+  height:100%;border-radius:8px;
+  background:linear-gradient(90deg,#A39161,#d4b896);
+  transition:width 1s ease;
+}
+
+/* 온도 & 게이지 */
+.gauge-big{
+  text-align:center;
+}
+.gauge-num{
+  font-size:42px;font-weight:900;
+  background:linear-gradient(135deg,var(--blue),var(--sky));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.gauge-arc-wrap{display:flex;justify-content:center;margin-top:8px;}
+
+/* Vis-network 컨테이너 */
+#commentNetwork{
+  width:100%;height:440px;
+  border:2px solid var(--pale);border-radius:12px;
+  background:linear-gradient(135deg,#f8fbff,#eef7ff);
+}
+
+/* 도장 바 차트 */
+.stamp-bar-list{display:flex;flex-direction:column;gap:10px;}
+.stamp-bar-item{display:flex;align-items:center;gap:10px;}
+.stamp-bar-label{font-size:12px;font-weight:600;white-space:nowrap;min-width:90px;color:var(--text);}
+.stamp-bar-track{flex:1;height:16px;background:#e8f4fd;border-radius:8px;overflow:hidden;}
+.stamp-bar-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--blue),var(--sky));transition:width 1s ease;}
+.stamp-bar-cnt{font-size:12px;font-weight:700;color:var(--blue);min-width:28px;text-align:right;}
+
+/* 물고기 분포 */
+.fish-dist-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
+}
+.fish-dist-item{
+  text-align:center;padding:12px 6px;
+  border-radius:12px;background:#f8fbff;border:2px solid #e0ebf7;
+  transition:all 0.2s;
+}
+.fish-dist-item.winner{border-color:var(--blue);background:linear-gradient(135deg,#eef7ff,#dceefb);}
+.fish-dist-icon{font-size:26px;margin-bottom:4px;}
+.fish-dist-name{font-size:10px;font-weight:700;color:var(--deep);}
+.fish-dist-pct{font-size:13px;font-weight:900;color:var(--blue);margin-top:2px;}
+
+/* 난이도 레이더 */
+#levelChart{height:240px;}
+
+/* 빈 상태 */
+.empty-state{
+  text-align:center;padding:40px;color:var(--sub);
+}
+.empty-icon{font-size:48px;margin-bottom:12px;}
+.empty-text{font-size:14px;line-height:1.6;}
+
+/* 로딩 */
+.loading-overlay{
+  position:fixed;inset:0;background:rgba(255,255,255,0.9);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:9999;transition:opacity 0.4s;
+}
+.loading-overlay.hide{opacity:0;pointer-events:none;}
+.loading-fish{font-size:52px;animation:bob 1.2s ease-in-out infinite;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.loading-text{font-size:15px;font-weight:600;color:var(--blue);margin-top:14px;}
+.loading-bar{
+  width:200px;height:6px;background:#e0ebf7;border-radius:3px;overflow:hidden;margin-top:10px;
+}
+.loading-bar-fill{
+  height:100%;width:0;border-radius:3px;
+  background:linear-gradient(90deg,var(--blue),var(--sky));
+  animation:load-fill 1.5s ease-in-out infinite;
+}
+@keyframes load-fill{0%{width:0}50%{width:80%}100%{width:100%}}
+
+/* 타임라인 */
+.timeline-wrap{max-height:200px;overflow-y:auto;padding-right:4px;}
+.timeline-item{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:8px 0;border-bottom:1px solid #f0f5fb;
+}
+.timeline-item:last-child{border-bottom:none;}
+.timeline-dept{
+  font-size:10px;font-weight:700;color:white;
+  background:var(--blue);border-radius:6px;padding:2px 7px;
+  white-space:nowrap;margin-top:2px;flex-shrink:0;
+}
+.timeline-comment{font-size:13px;color:var(--text);font-weight:500;line-height:1.4;}
+.timeline-quote{font-size:11px;color:var(--sub);margin-top:2px;}
+</style>
+
+</head>
+<body>
+
+<!-- 로딩 -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-fish">🐟</div>
+  <div class="loading-text">데이터를 낚아오는 중...</div>
+  <div class="loading-bar"><div class="loading-bar-fill"></div></div>
+</div>
+
+<!-- 헤더 -->
+<header class="dash-header">
+  <div class="dash-badge">📊 수협 ICT전략실 · 강의 설문 결과</div>
+  <h1 class="dash-title">오늘 강의, 다들 얼마나 낚이셨나요? 🎣</h1>
+  <p class="dash-sub">실시간 설문 결과 대시보드 · 익명 응답 기반</p>
+  <div class="live-count">
+    <div class="live-dot"></div>
+    <span>총 <strong id="totalCount">-</strong>명 응답</span>
+  </div>
+</header>
+
+<!-- 새로고침 바 -->
+<div class="refresh-bar">
+  <a href="index.html" class="survey-link">🎣 설문 참여하기</a>
+  <span class="last-updated" id="lastUpdated">마지막 업데이트: -</span>
+  <button class="refresh-btn" onclick="loadData()">
+    <span>🔄</span><span>새로고침</span>
+  </button>
+</div>
+
+<!-- 대시보드 -->
+<div class="dash-grid">
+
+  <!-- KPI 박스 -->
+  <div class="kpi-grid">
+    <div class="kpi-card blue">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-val blue" id="kpiTotal">-</div>
+      <div class="kpi-label">총 응답자</div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-icon">💰</div>
+      <div class="kpi-val gold"><span id="kpiSalary">-</span><span style="font-size:16px">만원</span></div>
+      <div class="kpi-label">평균 특별상여금</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-icon">🌡️</div>
+      <div class="kpi-val red"><span id="kpiTemp">-</span><span style="font-size:16px">°C</span></div>
+      <div class="kpi-label">평균 실무활용 온도</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-val green"><span id="kpiChance">-</span><span style="font-size:16px">%</span></div>
+      <div class="kpi-label">평균 업무적용 가능성</div>
+    </div>
+  </div>
+
+  <!-- 부서 분포 도넛 -->
+  <div class="d-card span-4">
+    <div class="c-eyebrow">소속 부문 분포</div>
+    <div class="c-title">어느 바다에서 왔나요? 🌊</div>
+    <div class="dept-chart-wrap">
+      <canvas id="deptChart"></canvas>
+    </div>
+  </div>
+
+  <!-- 특별상여금 -->
+  <div class="d-card span-4">
+    <div class="c-eyebrow">Q1 · 강사 특별상여금</div>
+    <div class="c-title">심사위원단 평균 판정 💰</div>
+    <div class="salary-big">
+      <div class="salary-num"><span id="salaryNum">-</span><span style="font-size:20px;color:var(--sub)"> 만원</span></div>
+      <div class="salary-sub">전체 응답자 평균 / 최대 1,000만원</div>
+      <div class="salary-meter">
+        <div class="salary-meter-fill" id="salaryMeterFill" style="width:0%"></div>
+      </div>
+    </div>
+    <canvas id="salaryDistChart" style="max-height:120px;margin-top:8px;"></canvas>
+  </div>
+
+  <!-- 온도 + 채움 게이지 -->
+  <div class="d-card span-4">
+    <div class="c-eyebrow">Q2 · Q7 평균 게이지</div>
+    <div class="c-title">뜨거움 & 충전 수치 🌡️🪣</div>
+    <canvas id="gaugeChart" style="max-height:180px;"></canvas>
+    <div style="display:flex;gap:20px;margin-top:12px;text-align:center;justify-content:center;">
+      <div>
+        <div style="font-size:24px;font-weight:900;color:#FF3366;" id="tempBig">-</div>
+        <div style="font-size:11px;color:var(--sub);">실무 온도</div>
+      </div>
+      <div style="color:#e0ebf7;font-size:20px;">|</div>
+      <div>
+        <div style="font-size:24px;font-weight:900;color:var(--sky);" id="fillBig">-</div>
+        <div style="font-size:11px;color:var(--sub);">뇌 충전율</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 활용 시기 -->
+  <div class="d-card span-6">
+    <div class="c-eyebrow">Q3 · 언제 써먹을까?</div>
+    <div class="c-title">실행 타이머 분포 ⏰</div>
+    <canvas id="timingChart" style="max-height:220px;"></canvas>
+  </div>
+
+  <!-- 도장 분포 -->
+  <div class="d-card span-6">
+    <div class="c-eyebrow">Q4 · 강사 도장 수여식</div>
+    <div class="c-title">어떤 도장을 받았나요? 🏅</div>
+    <div class="stamp-bar-list" id="stampBars"></div>
+  </div>
+
+  <!-- 한줄 의견 Vis-network -->
+  <div class="d-card span-12">
+    <div class="c-eyebrow">Q5 · 한 줄 명언 네트워크</div>
+    <div class="c-title">오늘 강의는 나에게... ✍️ <span style="font-size:12px;font-weight:400;color:var(--sub);">— 부서별 한줄 의견 시각화 (클릭해서 탐색)</span></div>
+    <div id="commentNetwork"></div>
+    <div id="commentList" class="timeline-wrap" style="margin-top:12px;"></div>
+  </div>
+
+  <!-- 업무 적용 가능성 레이더 -->
+  <div class="d-card span-6">
+    <div class="c-eyebrow">Q6 · 실제 사용 확률</div>
+    <div class="c-title">부서별 업무 적용 가능성 📈</div>
+    <canvas id="chanceByDeptChart" style="max-height:240px;"></canvas>
+  </div>
+
+  <!-- 수산물 비유 -->
+  <div class="d-card span-6">
+    <div class="c-eyebrow">Q8 · 오늘의 수산물</div>
+    <div class="c-title">강의가 어떤 수산물이었나요? 🐟</div>
+    <div class="fish-dist-grid" id="fishDistGrid"></div>
+  </div>
+
+  <!-- 와이파이 + 난이도 -->
+  <div class="d-card span-6">
+    <div class="c-eyebrow">Q9 · 강사 수신 강도</div>
+    <div class="c-title">와이파이 평균 수신 감도 📡</div>
+    <canvas id="wifiChart" style="max-height:200px;"></canvas>
+  </div>
+
+  <div class="d-card span-6">
+    <div class="c-eyebrow">Q10 · 강의 난이도</div>
+    <div class="c-title">체감 게임 난이도 분포 🎮</div>
+    <canvas id="levelChart" style="max-height:200px;"></canvas>
+  </div>
+
+</div>
+<script>
+// ══════════════════════════════════════════════
+// 설정
+// ══════════════════════════════════════════════
+// ════════════════════════════════════════════════════
+// Supabase 설정
+// ════════════════════════════════════════════════════
+const SUPABASE_URL    = 'cbigcstuhuyrmujafnbs.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_FpZ_g14aoD0xgOyxSjqslA_3TAwHiGm';
+const TABLE_NAME      = 'survey_responses';
+
+const DEPT_COLORS = {
+  'IT·디지털·정보보안':       '#0068B7',
+  '기획·경영관리':             '#00A0E9',
+  '교육지원·회원조합·어업인지원':'#A39161',
+  '경제사업·유통·무역':        '#004098',
+  '금융지원·상호금융·공제·정책보험':'#9FD9F6',
+  '리스크·감사·준법·연구':     '#5a7a9a',
+  '기타·소속 선택 안 함':      '#b0c4d8',
+};
+const DEPT_LIST = Object.keys(DEPT_COLORS);
+
+Chart.defaults.font.family = "'Noto Sans KR', sans-serif";
+Chart.defaults.color = '#5a7a9a';
+
+// ══════════════════════════════════════════════
+// 더미 데이터 (API 연결 전 테스트용)
+// ══════════════════════════════════════════════
+function generateDummyData() {
+  const depts = DEPT_LIST;
+  const timings = ['오늘 당장!','이번 주 안에','다음 달쯤...','기회가 되면','솔직히 모르겠음','AI가 대신 해줘'];
+  const stamps  = ['최우수강사','실무의신','쉽게설명왕','열정맨','아직부족','재수강추천'];
+  const fishes  = ['참치-힘차고 알찬 강의','복어-살짝 위험하지만 맛있는','멍게-독특하고 처음엔 낯선','오징어-다양하게 활용 가능','미역-흐물흐물 집중이 안됨','성게-겉은 어렵지만 속은 알찬'];
+  const levels  = ['Easy-쉬웠어요','Normal-적당했어요','Hard-좀 어려웠어요','Expert-많이 어려웠어요','???-무슨 말인지 모름'];
+  const comments= ['눈이 번쩍 뜨이는 경험','실용 그 자체였다','어렵지만 도전해볼게요','AI랑 친해진 시간','내 업무 완전 혁명!','뇌가 풀가동됐다','바다처럼 깊은 내용','낚시 제대로 됐다','내일 바로 써봐야지','아직은 멀게 느껴짐','흥미롭지만 어려워','생각보다 재미있었음'];
+  const rows = [];
+  const n = 18;
+  for (let i = 0; i < n; i++) {
+    rows.push({
+      '부서구분': depts[Math.floor(Math.random()*depts.length)],
+      'Q1_특별상여금(만원)': (Math.random()*800+50).toFixed(0),
+      'Q2_실무활용온도(°C)': (Math.random()*70+20).toFixed(0),
+      'Q3_활용시기': timings[Math.floor(Math.random()*timings.length)],
+      'Q4_도장종류': stamps[Math.floor(Math.random()*stamps.length)],
+      'Q5_한줄의견': Math.random() > 0.3 ? comments[Math.floor(Math.random()*comments.length)] : '',
+      'Q6_업무적용가능성(%)': (Math.random()*70+15).toFixed(0),
+      'Q7_머릿속채움(%)': (Math.random()*60+25).toFixed(0),
+      'Q8_수산물비유': fishes[Math.floor(Math.random()*fishes.length)],
+      'Q9_신호수신강도': String(Math.floor(Math.random()*5)+1),
+      'Q10_강의난이도': levels[Math.floor(Math.random()*levels.length)],
+    });
+  }
+  // 집계 빌드
+  const avg = (key) => {
+    const v = rows.map(r=>parseFloat(r[key])).filter(x=>!isNaN(x));
+    return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(1) : 0;
+  };
+  const freq = (key) => {
+    const m={};
+    rows.forEach(r=>{ const v=r[key]||'미응답'; m[v]=(m[v]||0)+1; });
+    return m;
+  };
+  const deptCount = {};
+  rows.forEach(r=>{ const d=r['부서구분']||'기타'; deptCount[d]=(deptCount[d]||0)+1; });
+  const comments2 = rows.map(r=>({text:r['Q5_한줄의견'],dept:r['부서구분']})).filter(c=>c.text);
+  return {
+    status:'ok', count:n, rows,
+    summary:{
+      totalCount:n, deptDist:deptCount,
+      avgSalary:avg('Q1_특별상여금(만원)'),
+      avgTemp:avg('Q2_실무활용온도(°C)'),
+      timingDist:freq('Q3_활용시기'),
+      stampDist:freq('Q4_도장종류'),
+      comments:comments2,
+      avgChance:avg('Q6_업무적용가능성(%)'),
+      avgFill:avg('Q7_머릿속채움(%)'),
+      fishDist:freq('Q8_수산물비유'),
+      avgSignal:avg('Q9_신호수신강도'),
+      levelDist:freq('Q10_강의난이도'),
+      rows
+    }
+  };
+}
+
+// ══════════════════════════════════════════════
+// 데이터 로드
+// ══════════════════════════════════════════════
+let currentData = null;
+const charts = {};
+
+// ── Supabase 데이터 로드 + 집계
+async function loadData() {
+  document.getElementById('loadingOverlay').classList.remove('hide');
+  try {
+    const res = await fetch(
+      SUPABASE_URL + '/rest/v1/' + TABLE_NAME + '?select=*&order=created_at.desc&limit=1000',
+      {
+        method: 'GET',
+        headers: {
+          'apikey':        SUPABASE_ANON_KEY,
+          'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+          'Content-Type':  'application/json',
+        },
+      }
+    );
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const rows = await res.json();
+
+    // 집계 함수
+    const avg = (key) => {
+      const vals = rows.map(r => parseFloat(r[key])).filter(v => !isNaN(v));
+      return vals.length ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : 0;
+    };
+    const freq = (key) => {
+      const m = {};
+      rows.forEach(r => { const v = r[key]||'미응답'; m[v]=(m[v]||0)+1; });
+      return m;
+    };
+    const deptCount = {};
+    rows.forEach(r => { const d=r.department||'기타'; deptCount[d]=(deptCount[d]||0)+1; });
+    const comments = rows.map(r=>({text:r.q5_comment||'', dept:r.department||''})).filter(c=>c.text.trim());
+
+    const summary = {
+      totalCount:  rows.length,
+      deptDist:    deptCount,
+      avgSalary:   avg('q1_salary'),
+      avgTemp:     avg('q2_temp'),
+      timingDist:  freq('q3_timing'),
+      stampDist:   freq('q4_stamp'),
+      comments:    comments,
+      avgChance:   avg('q6_chance'),
+      avgFill:     avg('q7_fill'),
+      fishDist:    freq('q8_fish'),
+      avgSignal:   avg('q9_signal'),
+      levelDist:   freq('q10_level'),
+    };
+
+    // rows를 결과 페이지용 컬럼명으로 변환
+    const mappedRows = rows.map(r => ({
+      '부서구분':             r.department||'',
+      'Q1_특별상여금(만원)':  r.q1_salary,
+      'Q2_실무활용온도(°C)':  r.q2_temp,
+      'Q6_업무적용가능성(%)': r.q6_chance,
+      'Q9_신호수신강도':      r.q9_signal,
+    }));
+
+    currentData = { count: rows.length, rows: mappedRows, summary };
+    const summaryWithRows = Object.assign({}, summary, { rows: mappedRows });
+    renderAll(summaryWithRows);
+    document.getElementById('lastUpdated').textContent = '마지막 업데이트: ' + new Date().toLocaleTimeString('ko-KR');
+  } catch (e) {
+    console.error('Supabase 오류:', e);
+    document.getElementById('totalCount').textContent = '-';
+    document.getElementById('kpiTotal').textContent = '-';
+    document.getElementById('lastUpdated').textContent = '🔄 잠시 후 자동으로 재시도합니다';
+    setTimeout(loadData, 15000);
+  } finally {
+    setTimeout(() => document.getElementById('loadingOverlay').classList.add('hide'), 600);
+  }
+}
+
+function buildSummaryFromLocal(arr) {
+  const avg = (key) => {
+    const v = arr.map(r=>parseFloat(r[key])).filter(x=>!isNaN(x));
+    return v.length ? (v.reduce((a,b)=>a+b,0)/v.length).toFixed(1) : 0;
+  };
+  const freq = (key) => {
+    const m={};
+    arr.forEach(r=>{ const v=r[key]||'미응답'; m[v]=(m[v]||0)+1; });
+    return m;
+  };
+  const deptCount = {};
+  arr.forEach(r=>{ const d=r['department']||'기타'; deptCount[d]=(deptCount[d]||0)+1; });
+  return { status:'ok', count:arr.length, summary:{
+    totalCount:arr.length, deptDist:deptCount,
+    avgSalary:avg('q1_salary'), avgTemp:avg('q2_temp'),
+    timingDist:freq('q3_timing'), stampDist:freq('q4_stamp'),
+    comments:arr.map(r=>({text:r['q5_comment']||'',dept:r['department']||''})).filter(c=>c.text),
+    avgChance:avg('q6_chance'), avgFill:avg('q7_fill'),
+    fishDist:freq('q8_fish'), avgSignal:avg('q9_signal'),
+    levelDist:freq('q10_level'), rows:arr
+  }};
+}
+
+// ══════════════════════════════════════════════
+// 렌더링 메인
+// ══════════════════════════════════════════════
+function renderAll(s) {
+  if (!s) return;
+  const n = s.totalCount || 0;
+  document.getElementById('totalCount').textContent = n;
+  document.getElementById('kpiTotal').textContent = n;
+  document.getElementById('kpiSalary').textContent = Math.round(s.avgSalary||0);
+  document.getElementById('kpiTemp').textContent = Math.round(s.avgTemp||0);
+  document.getElementById('kpiChance').textContent = Math.round(s.avgChance||0);
+
+  if (n === 0) {
+    document.querySelectorAll('.d-card').forEach(c => {
+      if (!c.querySelector('canvas')) return;
+      c.innerHTML += '<div class="empty-state"><div class="empty-icon">🎣</div><div class="empty-text">아직 응답이 없습니다.<br>설문에 참여해 주세요!</div></div>';
+    });
+    return;
+  }
+
+  renderDeptDonut(s.deptDist || {});
+  renderSalary(s.avgSalary || 0, s.rows || []);
+  renderGauge(s.avgTemp || 0, s.avgFill || 0);
+  renderTiming(s.timingDist || {});
+  renderStamps(s.stampDist || {});
+  renderCommentNetwork(s.comments || []);
+  renderChanceByDept(s.rows || []);
+  renderFishDist(s.fishDist || {});
+  renderWifi(s.rows || []);
+  renderLevel(s.levelDist || {});
+}
+
+// ── 부서 도넛 ──────────────────────────────────
+function renderDeptDonut(deptDist) {
+  destroyChart('deptChart');
+  const labels = Object.keys(deptDist);
+  const data   = Object.values(deptDist);
+  const colors = labels.map(l => DEPT_COLORS[l] || '#b0c4d8');
+  charts.deptChart = new Chart(document.getElementById('deptChart'), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderWidth:3, borderColor:'white', hoverOffset:6 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{ position:'right', labels:{ font:{size:11}, padding:10, boxWidth:12 } },
+        tooltip:{ callbacks:{ label: ctx => ' ' + ctx.label + ': ' + ctx.parsed + '명' } }
+      },
+      cutout:'60%',
+    }
+  });
+}
+
+// ── 상여금 분포 ────────────────────────────────
+function renderSalary(avg, rows) {
+  document.getElementById('salaryNum').textContent = Math.round(avg).toLocaleString();
+  document.getElementById('salaryMeterFill').style.width = Math.min(avg/10, 100) + '%';
+
+  destroyChart('salaryDistChart');
+  // 구간별 집계
+  const buckets = ['0-100','101-200','201-300','301-500','501-700','701-1000'];
+  const counts  = [0,0,0,0,0,0];
+  rows.forEach(r => {
+    const v = parseFloat(r['Q1_특별상여금(만원)'] || r['q1_salary'] || 0);
+    if (v<=100) counts[0]++;
+    else if (v<=200) counts[1]++;
+    else if (v<=300) counts[2]++;
+    else if (v<=500) counts[3]++;
+    else if (v<=700) counts[4]++;
+    else counts[5]++;
+  });
+  charts.salaryDistChart = new Chart(document.getElementById('salaryDistChart'), {
+    type:'bar',
+    data:{ labels:buckets, datasets:[{
+      data:counts,
+      backgroundColor: counts.map((_,i) => `rgba(163,145,97,${0.4+i*0.1})`),
+      borderRadius:6, borderSkipped:false,
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label: ctx=>' '+ctx.parsed.y+'명'}} },
+      scales:{ x:{grid:{display:false},ticks:{font:{size:9}}}, y:{display:false} }
+    }
+  });
+}
+
+// ── 온도+채움 게이지 ───────────────────────────
+function renderGauge(temp, fill) {
+  document.getElementById('tempBig').textContent = Math.round(temp) + '°C';
+  document.getElementById('fillBig').textContent = Math.round(fill) + '%';
+  destroyChart('gaugeChart');
+  charts.gaugeChart = new Chart(document.getElementById('gaugeChart'), {
+    type:'bar',
+    data:{
+      labels:['실무 온도(°C)','뇌 충전율(%)'],
+      datasets:[{
+        data:[Math.round(temp), Math.round(fill)],
+        backgroundColor:['rgba(255,51,102,0.8)','rgba(0,160,233,0.8)'],
+        borderRadius:8, borderSkipped:false,
+        barThickness:40,
+      }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.x}} },
+      scales:{
+        x:{ max:100, grid:{color:'rgba(0,0,0,0.04)'}, ticks:{font:{size:11}} },
+        y:{ grid:{display:false}, ticks:{font:{size:12,weight:'bold'}} }
+      }
+    }
+  });
+}
+
+// ── 활용 시기 ──────────────────────────────────
+function renderTiming(dist) {
+  destroyChart('timingChart');
+  const TIMING_META = {
+    '오늘 당장!':       { icon:'⚡', color:'#0068B7' },
+    '이번 주 안에':     { icon:'📅', color:'#00A0E9' },
+    '다음 달쯤...':     { icon:'🗓️', color:'#A39161' },
+    '기회가 되면':      { icon:'🌊', color:'#9FD9F6' },
+    '솔직히 모르겠음':  { icon:'🤷', color:'#5a7a9a' },
+    'AI가 대신 해줘':   { icon:'🤖', color:'#004098' },
+  };
+  const total = Object.values(dist).reduce((a,b)=>a+b,0) || 1;
+  const sorted = Object.entries(dist).sort((a,b)=>b[1]-a[1]);
+  const el = document.getElementById('timingChart').parentElement;
+  // canvas 대신 HTML 바 차트로 교체
+  const existingCanvas = document.getElementById('timingChart');
+  const wrap = document.createElement('div');
+  wrap.id = 'timingBars';
+  wrap.style.cssText = 'display:flex;flex-direction:column;gap:10px;padding:4px 0;';
+  existingCanvas.replaceWith(wrap);
+
+  sorted.forEach(([k, v]) => {
+    const meta = TIMING_META[k] || { icon:'⏰', color:'#0068B7' };
+    const pct  = (v / total * 100).toFixed(0);
+    const item = document.createElement('div');
+    item.style.cssText = 'display:flex;align-items:center;gap:10px;';
+    item.innerHTML = ''
+      + '<span style="font-size:18px;width:26px;text-align:center;flex-shrink:0">'+meta.icon+'</span>'
+      + '<span style="font-size:12px;font-weight:700;color:#1a2744;min-width:100px;flex-shrink:0">'+k+'</span>'
+      + '<div style="flex:1;height:20px;background:#e8f4fd;border-radius:10px;overflow:hidden;">'
+      +   '<div style="height:100%;width:0%;background:'+meta.color+';border-radius:10px;transition:width 1s ease;" data-w="'+pct+'%"></div>'
+      + '</div>'
+      + '<span style="font-size:12px;font-weight:900;color:'+meta.color+';min-width:42px;text-align:right">'+pct+'% <small style="font-weight:400;color:#8E9BAE">('+v+'명)</small></span>';
+
+
+    wrap.appendChild(item);
+  });
+  // 애니메이션
+  requestAnimationFrame(() => {
+    wrap.querySelectorAll('[data-w]').forEach(bar => {
+      bar.style.width = bar.getAttribute('data-w');
+    });
+  });
+}
+
+// ── 도장 수평 바 ───────────────────────────────
+const STAMP_ICONS = {'최우수강사':'🏆','실무의신':'⚡','쉽게설명왕':'💡','열정맨':'🔥','아직부족':'📝','재수강추천':'🔄'};
+function renderStamps(dist) {
+  const total = Object.values(dist).reduce((a,b)=>a+b,0) || 1;
+  const sorted = Object.entries(dist).sort((a,b)=>b[1]-a[1]);
+  const el = document.getElementById('stampBars');
+  el.innerHTML = sorted.map(([k,v]) => `
+    <div class="stamp-bar-item">
+      <span class="stamp-bar-label">${STAMP_ICONS[k]||'🏅'} ${k}</span>
+      <div class="stamp-bar-track">
+        <div class="stamp-bar-fill" style="width:${(v/total*100).toFixed(1)}%"></div>
+      </div>
+      <span class="stamp-bar-cnt">${v}명</span>
+    </div>
+  `).join('');
+}
+
+// ── 한줄 의견 Vis-network ─────────────────────
+function renderCommentNetwork(comments) {
+  if (!comments || comments.length === 0) {
+    document.getElementById('commentNetwork').innerHTML = '<div class="empty-state"><div class="empty-icon">✍️</div><div class="empty-text">한 줄 의견이 아직 없습니다.</div></div>';
+    return;
+  }
+  const container = document.getElementById('commentNetwork');
+  const nodes = new vis.DataSet();
+  const edges = new vis.DataSet();
+  const BUBBLE_COLORS  = ['#E3F2FD','#E8F5E9','#FFF8E1','#FCE4EC','#F3E5F5','#E0F7FA','#FBE9E7','#F9FBE7'];
+  const BUBBLE_BORDERS = ['#0068B7','#4CAF50','#FF9800','#F44336','#9C27B0','#00BCD4','#FF5722','#8BC34A'];
+
+  function getDeptIcon(dept) {
+    if (!dept) return '🌊';
+    if (dept.includes('IT') || dept.includes('디지털') || dept.includes('정보')) return '💻';
+    if (dept.includes('기획') || dept.includes('경영')) return '📊';
+    if (dept.includes('교육') || dept.includes('회원') || dept.includes('어업')) return '🎓';
+    if (dept.includes('경제') || dept.includes('유통') || dept.includes('무역')) return '🚢';
+    if (dept.includes('금융') || dept.includes('공제') || dept.includes('보험')) return '🏦';
+    if (dept.includes('리스크') || dept.includes('감사') || dept.includes('준법')) return '🔍';
+    return '🌊';
+  }
+
+  // 중앙 노드
+  nodes.add({
+    id:'center', label:'🎣 오늘 강의', shape:'ellipse',
+    color:{background:'#004098', border:'#00A0E9', highlight:{background:'#0068B7',border:'#9FD9F6'}},
+    font:{color:'white', size:16, bold:true}, size:54,
+    shadow:{enabled:true, color:'rgba(0,64,152,0.45)', size:14, x:3, y:4},
+    x:0, y:0
+  });
+
+  // 부서 노드 (드래그 가능, fixed 없음)
+  const depts = [...new Set(comments.map(c=>c.dept).filter(Boolean))];
+  const deptR = 190;
+  depts.forEach((d,i) => {
+    const angle = (2*Math.PI/depts.length)*i - Math.PI/2;
+    const icon  = getDeptIcon(d);
+    const short = d.length > 5 ? d.substring(0,5)+'…' : d;
+    nodes.add({
+      id:'dept_'+i, label:icon+' '+short, shape:'ellipse',
+      color:{background:DEPT_COLORS[d]||'#5a7a9a', border:'rgba(255,255,255,0.8)',
+             highlight:{background:'#00A0E9', border:'white'}},
+      font:{color:'white', size:12, bold:true}, size:34,
+      shadow:{enabled:true, color:'rgba(0,0,0,0.25)', size:8, x:2, y:3},
+      x:Math.cos(angle)*deptR, y:Math.sin(angle)*deptR
+    });
+    edges.add({ from:'center', to:'dept_'+i,
+      color:{color:'rgba(0,104,183,0.4)', highlight:'#0068B7'},
+      width:2.5, dashes:[8,4], smooth:{type:'dynamic'}
+    });
+  });
+
+  // 의견 노드 (말풍선, 드래그 가능)
+  const commentsByDept = {};
+  comments.forEach((c,i) => {
+    const deptIdx = depts.indexOf(c.dept);
+    const key = deptIdx >= 0 ? deptIdx : 'none';
+    if (!commentsByDept[key]) commentsByDept[key] = [];
+    commentsByDept[key].push(i);
+  });
+  const commentR = 340;
+  Object.entries(commentsByDept).forEach(([dKey, idxArr]) => {
+    const di = parseInt(dKey);
+    const baseAngle = isNaN(di) ? Math.PI/4 : (2*Math.PI/depts.length)*di - Math.PI/2;
+    idxArr.forEach((ci, j) => {
+      const spread = idxArr.length > 1 ? (j/(idxArr.length-1)-0.5)*0.65 : 0;
+      const angle  = baseAngle + spread;
+      const c2     = comments[ci];
+      const bg     = BUBBLE_COLORS[ci % BUBBLE_COLORS.length];
+      const brd    = DEPT_COLORS[c2.dept] || BUBBLE_BORDERS[ci % BUBBLE_BORDERS.length];
+      nodes.add({
+        id:'comment_'+ci, label:'✏️  '+c2.text, shape:'box',
+        color:{background:bg, border:brd, highlight:{background:'#dceefb',border:'#0068B7'}},
+        font:{size:13, color:'#1a2744', bold:true},
+        borderWidth:2.5, borderWidthSelected:4,
+        margin:{top:10, right:14, bottom:10, left:14},
+        shadow:{enabled:true, color:'rgba(0,0,0,0.1)', size:6, x:2, y:3},
+        x:Math.cos(angle)*commentR, y:Math.sin(angle)*commentR
+      });
+      const srcId = isNaN(di) ? 'center' : 'dept_'+di;
+      edges.add({ from:srcId, to:'comment_'+ci,
+        color:{color:brd+'88', highlight:brd},
+        width:1.8, smooth:{type:'curvedCW', roundness:0.15}
+      });
+    });
+  });
+
+  const options = {
+    physics:{ enabled:false },
+    interaction:{ hover:true, dragNodes:true, dragView:true, zoomView:true },
+    layout:{ improvedLayout:false },
+    edges:{ smooth:{enabled:true} },
+    nodes:{ chosen:true }
+  };
+
+  const network = new vis.Network(container, { nodes, edges }, options);
+  setTimeout(() => network.fit({ animation:{duration:400, easingFunction:'easeOutQuad'} }), 80);
+
+  // 하단 의견 카드 (익명 제거)
+  const listEl = document.getElementById('commentList');
+  listEl.innerHTML = comments.map((c,i) => {
+    const brd  = DEPT_COLORS[c.dept] || BUBBLE_BORDERS[i % BUBBLE_BORDERS.length];
+    const icon = getDeptIcon(c.dept||'');
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 4px;border-bottom:1px solid #f0f5fb;">'
+      + '<span style="font-size:20px;flex-shrink:0;margin-top:2px;">'+icon+'</span>'
+      + '<div style="flex:1;">'
+      +   '<span style="font-size:11px;font-weight:700;color:white;background:'+brd+';border-radius:20px;padding:3px 10px;display:inline-block;margin-bottom:6px;">'+(c.dept||'기타').substring(0,8)+'</span>'
+      +   '<div style="font-size:14px;color:#1a2744;line-height:1.6;">'
+      +     '오늘 강의는 나에게 <strong style="color:'+brd+';font-size:15px;">&ldquo;'+c.text+'&rdquo;</strong> 이었다.'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+// ── 부서별 적용 가능성 레이더 ─────────────────
+function renderChanceByDept(rows) {
+  destroyChart('chanceByDeptChart');
+  const deptChance = {};
+  const deptCnt    = {};
+  rows.forEach(r => {
+    const d = r['부서구분'] || r['department'] || '기타';
+    // 키 이름의 특수문자 대응: 여러 형태 시도
+    const v = parseFloat(
+      r['Q6_업무적용가능성(%)'] || r['Q6_업무적용가능성(%'] ||
+      r['q6_chance'] || r['Q6'] || 0
+    );
+    if (!isNaN(v)) {
+      deptChance[d] = (deptChance[d]||0) + v;
+      deptCnt[d]    = (deptCnt[d]||0) + 1;
+    }
+  });
+  const labels = Object.keys(deptChance);
+  const data   = labels.map(d => (deptChance[d]/deptCnt[d]).toFixed(1));
+  charts.chanceByDeptChart = new Chart(document.getElementById('chanceByDeptChart'), {
+    type:'radar',
+    data:{
+      labels: labels.map(l=>l.length>6?l.substring(0,6)+'…':l),
+      datasets:[{
+        label:'평균 적용 가능성(%)',
+        data, fill:true,
+        backgroundColor:'rgba(0,104,183,0.15)',
+        borderColor:'#0068B7', pointBackgroundColor:'#00A0E9',
+        pointBorderColor:'white', pointBorderWidth:2, pointRadius:5,
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ r:{ min:0, max:100, ticks:{stepSize:25, font:{size:10}}, pointLabels:{font:{size:10}} } }
+    }
+  });
+}
+
+// ── 수산물 분포 ────────────────────────────────
+const FISH_ICONS = {
+  '참치':'🐟','복어':'🐡','멍게':'🪸','오징어':'🦑','미역':'🌿','성게':'🦔'
+};
+function renderFishDist(dist) {
+  const total = Object.values(dist).reduce((a,b)=>a+b,0) || 1;
+  const entries = Object.entries(dist).sort((a,b)=>b[1]-a[1]);
+  const maxVal  = entries.length ? entries[0][1] : 1;
+
+  const el = document.getElementById('fishDistGrid');
+  el.innerHTML = entries.map(([k,v]) => {
+    const name = k.split('-')[0];
+    const icon = FISH_ICONS[name] || '🐟';
+    const pct  = (v/total*100).toFixed(0);
+    return `
+      <div class="fish-dist-item ${v===maxVal?'winner':''}">
+        <div class="fish-dist-icon">${icon}</div>
+        <div class="fish-dist-name">${name}</div>
+        <div class="fish-dist-pct">${pct}% <small style="font-size:10px;color:var(--sub)">(${v}명)</small></div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── 와이파이 바 차트 ───────────────────────────
+const WIFI_LABELS = {1:'완전 불통 😵',2:'약하게 잡힘 😕',3:'보통 수신 😐',4:'선명하게! 😄',5:'풀 5G 🤩'};
+function renderWifi(rows) {
+  destroyChart('wifiChart');
+  const counts = {1:0,2:0,3:0,4:0,5:0};
+  rows.forEach(r => {
+    const v = parseInt(
+      r['Q9_신호수신강도'] || r['q9_signal'] || r['Q9'] || 0
+    );
+    if (v >= 1 && v <= 5) counts[v]++;
+  });
+  charts.wifiChart = new Chart(document.getElementById('wifiChart'), {
+    type:'bar',
+    data:{
+      labels: Object.values(WIFI_LABELS),
+      datasets:[{ data: Object.values(counts), backgroundColor:['#FF3366','#FF6B35','#FFB800','#4CAF50','#0068B7'], borderRadius:8, borderSkipped:false }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:ctx=>' '+ctx.parsed.y+'명'}} },
+      scales:{ x:{grid:{display:false},ticks:{font:{size:9}}}, y:{display:false} }
+    }
+  });
+}
+
+// ── 난이도 분포 ────────────────────────────────
+const LEVEL_COLORS = {'Easy':'#4caf50','Normal':'#2196f3','Hard':'#ff9800','Expert':'#f44336','???':'#9c27b0'};
+function renderLevel(dist) {
+  destroyChart('levelChart');
+  const labels = Object.keys(dist).map(k=>k.split('-')[0]);
+  const data   = Object.values(dist);
+  const colors = labels.map(l => LEVEL_COLORS[l] || '#8E9BAE');
+  charts.levelChart = new Chart(document.getElementById('levelChart'), {
+    type:'doughnut',
+    data:{ labels: Object.keys(dist).map(k=>k.split('-')[0]+'\n'+k.split('-')[1]), datasets:[{ data, backgroundColor:colors, borderWidth:3, borderColor:'white', hoverOffset:8 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{size:11}, padding:8, boxWidth:12 } } },
+      cutout:'55%',
+    }
+  });
+}
+
+// ── 차트 제거 헬퍼 ─────────────────────────────
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+// ── 초기화 ─────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  loadData();
+  // 60초마다 자동 새로고침
+  setInterval(loadData, 60000);
+});
+</script>
+</body>
+</html>
