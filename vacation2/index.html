@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ICT전략실 휴가 항해일지 · 26년 7~10월</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --suhyup:#0068B7; --deep:#004098; --sky:#00A0E9; --pale:#9FD9F6;
+  --gold:#A39161; --silver:#C7CDD4;
+  --ink:#0A2540; --ink2:#13314f; --mute:#5b6b7d; --line:#e3e9f0;
+  --bg:#f4f8fc; --card:#ffffff; --wash:#eef5fb;
+  --ok:#1f9d6b; --warn:#d98a1f; --bad:#d64545;
+  --shadow:0 6px 24px rgba(10,37,64,.10);
+  --shadow-sm:0 2px 8px rgba(10,37,64,.08);
+  --r:16px; --r-sm:10px;
+  --font:'Pretendard','맑은 고딕','Malgun Gothic',-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;line-height:1.5}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:14px}
+::selection{background:var(--pale)}
+
+/* ============ LOGIN ============ */
+#login{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(1200px 700px at 70% -10%,#1b4a7e 0%,#0a2540 55%,#061a30 100%);
+  overflow:hidden}
+.sea-wave{position:absolute;left:-10%;right:-10%;bottom:-2px;height:220px;opacity:.5}
+.sea-wave path{fill:none;stroke:rgba(159,217,246,.25);stroke-width:2}
+.login-card{position:relative;z-index:2;width:min(420px,90vw);text-align:center;color:#fff;padding:8px}
+.porthole{width:148px;height:148px;margin:0 auto 26px;border-radius:50%;position:relative;
+  background:radial-gradient(circle at 35% 30%,#1d5fa0,#06294a);
+  box-shadow:0 0 0 10px rgba(159,217,246,.10),0 0 0 11px rgba(159,217,246,.35),inset 0 8px 30px rgba(0,0,0,.5);
+  display:flex;align-items:center;justify-content:center;animation:bob 5s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-7px)}}
+.porthole::before{content:"";position:absolute;inset:14px;border-radius:50%;
+  border:2px dashed rgba(159,217,246,.4)}
+.compass{width:74px;height:74px;animation:spin 26s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.brand-kr{font-size:13px;letter-spacing:.32em;color:var(--pale);font-weight:600;margin-bottom:10px}
+.login-card h1{font-size:27px;font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.login-card .sub{color:#aecbe6;font-size:14px;margin-top:10px;margin-bottom:30px;font-weight:500}
+.pw-wrap{display:flex;gap:9px;background:rgba(255,255,255,.08);border:1px solid rgba(159,217,246,.28);
+  border-radius:14px;padding:7px;backdrop-filter:blur(6px)}
+.pw-wrap input{flex:1;background:transparent;border:none;outline:none;color:#fff;font-size:16px;
+  padding:12px 14px;letter-spacing:.1em}
+.pw-wrap input::placeholder{color:#7f9bb8}
+.pw-wrap button{background:linear-gradient(135deg,var(--sky),var(--suhyup));color:#fff;font-weight:700;
+  border-radius:9px;padding:0 22px;font-size:15px;transition:.15s;white-space:nowrap}
+.pw-wrap button:active{transform:scale(.97)}
+.login-err{color:#ffc7c7;font-size:13px;margin-top:14px;height:18px;font-weight:500;opacity:0;transition:.2s}
+.login-err.show{opacity:1}
+.login-foot{margin-top:34px;color:#6e89a6;font-size:11.5px;line-height:1.7}
+
+/* ============ APP SHELL ============ */
+#app{display:none;min-height:100%;flex-direction:column}
+.topbar{position:sticky;top:0;z-index:40;background:linear-gradient(100deg,var(--deep),var(--suhyup));
+  color:#fff;box-shadow:0 2px 14px rgba(0,64,152,.35)}
+.topbar-in{max-width:1280px;margin:0 auto;padding:13px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo-mark{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.14);
+  display:grid;place-items:center;flex-shrink:0}
+.topbar h1{font-size:17px;font-weight:800;letter-spacing:-.01em}
+.topbar .tag{font-size:11.5px;color:var(--pale);font-weight:600;letter-spacing:.04em}
+.topbar .spacer{flex:1}
+.live-dot{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;
+  background:rgba(255,255,255,.12);padding:6px 12px;border-radius:20px}
+.live-dot i{width:8px;height:8px;border-radius:50%;background:#7ee0a8;box-shadow:0 0 0 0 rgba(126,224,168,.7);
+  animation:pulse 1.8s infinite}
+.live-dot.demo i{background:var(--gold);animation:none;box-shadow:none}
+@keyframes pulse{70%{box-shadow:0 0 0 7px rgba(126,224,168,0)}}
+
+.tabs{max-width:1280px;margin:0 auto;width:100%;padding:0 20px;display:flex;gap:4px;
+  border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:64px;z-index:30;overflow-x:auto}
+.tab{padding:14px 18px;font-size:14.5px;font-weight:700;color:var(--mute);position:relative;white-space:nowrap;
+  display:flex;align-items:center;gap:7px;transition:.15s}
+.tab:hover{color:var(--suhyup)}
+.tab.active{color:var(--suhyup)}
+.tab.active::after{content:"";position:absolute;left:12px;right:12px;bottom:-1px;height:3px;
+  background:var(--suhyup);border-radius:3px 3px 0 0}
+.tab .ico{font-size:16px}
+
+.wrap{max-width:1280px;margin:0 auto;width:100%;padding:22px 20px 60px;flex:1}
+.view{display:none;animation:fade .35s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}}
+
+/* ============ STAT CARDS ============ */
+.stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px;
+  box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--suhyup)}
+.stat .k{font-size:12.5px;color:var(--mute);font-weight:600;margin-bottom:8px}
+.stat .v{font-size:30px;font-weight:800;color:var(--ink);letter-spacing:-.02em;line-height:1}
+.stat .v small{font-size:14px;font-weight:600;color:var(--mute);margin-left:3px}
+.stat.s2::before{background:var(--sky)} .stat.s3::before{background:var(--gold)}
+.stat.s4::before{background:var(--ok)}
+
+/* ============ PANEL ============ */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);
+  overflow:hidden;margin-bottom:20px}
+.panel-h{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;
+  gap:12px;flex-wrap:wrap}
+.panel-h h2{font-size:16px;font-weight:800;display:flex;align-items:center;gap:9px}
+.panel-h h2 .bar{width:5px;height:18px;background:var(--suhyup);border-radius:3px}
+.panel-h .desc{font-size:12.5px;color:var(--mute);font-weight:500}
+.panel-h .right{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* ============ SEG / CHIP CONTROLS ============ */
+.seg{display:inline-flex;background:var(--wash);border-radius:10px;padding:3px;gap:2px}
+.seg button{padding:7px 14px;font-size:13px;font-weight:700;color:var(--mute);border-radius:8px;transition:.15s}
+.seg button.on{background:#fff;color:var(--suhyup);box-shadow:var(--shadow-sm)}
+.chip-row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink2);
+  background:var(--wash);border:1px solid var(--line);border-radius:20px;padding:5px 12px;transition:.15s}
+.chip .dot{width:10px;height:10px;border-radius:50%}
+.chip.off{opacity:.4}
+
+/* ============ TIMELINE / GANTT ============ */
+.gantt-wrap{overflow:auto;max-height:72vh;position:relative}
+.gantt{position:relative;font-size:12px;width:max-content;min-width:100%}
+.g-head{display:flex;position:sticky;top:0;z-index:6}
+.g-corner{position:sticky;left:0;z-index:7;width:188px;min-width:188px;background:var(--ink);color:#fff;
+  display:flex;align-items:flex-end;padding:8px 12px;font-weight:700;font-size:12px;border-right:2px solid var(--deep)}
+.g-months{display:flex;background:var(--ink)}
+.g-month{border-right:1px solid rgba(255,255,255,.12)}
+.g-month-name{height:24px;display:flex;align-items:center;padding-left:10px;color:#fff;font-weight:800;
+  font-size:12px;letter-spacing:.04em;position:sticky;left:0}
+.g-days{display:flex}
+.g-day{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  color:#bcd4ea;border-right:1px solid rgba(255,255,255,.06);padding-bottom:5px;height:40px}
+.g-day .wd{font-size:9px;opacity:.75;line-height:1}
+.g-day .dd{font-size:11px;font-weight:700;margin-top:2px}
+.g-day.we{background:rgba(159,217,246,.12);color:#9fd9f6}
+.g-day.ho{background:rgba(163,145,97,.28);color:#f0e1c0}
+.g-day.today .dd{background:var(--bad);color:#fff;border-radius:5px;padding:1px 4px}
+
+.g-team{display:flex;align-items:center;position:relative;z-index:5;height:30px;
+  background:linear-gradient(90deg,var(--wash),#fff);font-weight:800;font-size:12.5px;
+  color:var(--deep);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.g-team-in{position:sticky;left:0;display:inline-flex;align-items:center;gap:8px;height:100%;
+  padding:0 14px 0 12px;background:var(--wash);box-shadow:3px 0 6px -3px rgba(10,37,64,.12)}
+.g-team .cnt{font-size:11px;font-weight:700;color:var(--mute);background:#fff;border:1px solid var(--line);
+  border-radius:12px;padding:1px 9px}
+.g-team .tdot{width:11px;height:11px;border-radius:3px}
+.g-row{display:flex;border-bottom:1px solid #f0f4f8;height:34px}
+.g-row:hover .g-name{background:var(--wash)}
+.g-name{position:sticky;left:0;z-index:4;width:188px;min-width:188px;flex:0 0 188px;background:#fff;display:flex;
+  align-items:center;gap:8px;padding:0 12px;border-right:2px solid var(--line);transition:.12s;
+  box-shadow:3px 0 6px -3px rgba(10,37,64,.18)}
+.g-name .nm{font-weight:700;font-size:12.5px;color:var(--ink)}
+.g-name .sub{font-size:10.5px;color:var(--mute);margin-left:auto;background:var(--wash);
+  padding:1px 7px;border-radius:8px;white-space:nowrap}
+.g-track{position:relative;flex:0 0 auto}
+.g-cellbg{position:absolute;top:0;bottom:0;pointer-events:none}
+.g-cellbg.we{background:rgba(159,217,246,.13)}
+.g-cellbg.ho{background:rgba(163,145,97,.16)}
+.g-today{position:absolute;top:0;bottom:0;width:2px;background:var(--bad);z-index:3;pointer-events:none}
+.g-bar{position:absolute;top:5px;height:24px;border-radius:7px;display:flex;align-items:center;
+  padding:0 8px;color:#fff;font-size:10.5px;font-weight:700;white-space:nowrap;overflow:hidden;
+  box-shadow:0 2px 6px rgba(10,37,64,.25);cursor:pointer;z-index:2;transition:transform .1s,filter .1s}
+.g-bar:hover{transform:translateY(-1px);filter:brightness(1.07);z-index:8}
+.g-bar.half{top:8px;height:18px}
+.g-empty{padding:60px 20px;text-align:center;color:var(--mute)}
+
+/* ============ CALENDAR ============ */
+.cal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px}
+.cal-month{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow-sm);overflow:hidden}
+.cal-mh{padding:13px 16px;background:linear-gradient(100deg,var(--deep),var(--suhyup));color:#fff;
+  display:flex;align-items:center;justify-content:space-between}
+.cal-mh .mn{font-size:16px;font-weight:800}
+.cal-mh .mc{font-size:11.5px;font-weight:600;color:var(--pale)}
+.cal-week{display:grid;grid-template-columns:repeat(7,1fr);background:var(--wash)}
+.cal-week span{text-align:center;font-size:11px;font-weight:700;color:var(--mute);padding:7px 0}
+.cal-week span:first-child{color:#d64545} .cal-week span:last-child{color:#3a78c2}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-day{min-height:62px;border-right:1px solid #f0f4f8;border-bottom:1px solid #f0f4f8;padding:5px 6px;
+  position:relative;transition:.12s}
+.cal-day:nth-child(7n){border-right:none}
+.cal-day.empty{background:#fafbfd}
+.cal-day.has{cursor:pointer}
+.cal-day.has:hover{background:var(--wash)}
+.cal-day .dnum{font-size:11.5px;font-weight:700;color:var(--ink2)}
+.cal-day.sun .dnum{color:#d64545} .cal-day.sat .dnum{color:#3a78c2}
+.cal-day.ho{background:rgba(163,145,97,.12)}
+.cal-day.ho .dnum{color:var(--gold)}
+.cal-day .hname{font-size:8.5px;color:var(--gold);font-weight:700;margin-top:1px}
+.cal-cnt{position:absolute;top:5px;right:6px;min-width:18px;height:18px;border-radius:9px;
+  background:var(--suhyup);color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;
+  justify-content:center;padding:0 5px}
+.cal-mini{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.cal-mini span{display:block;font-size:9.5px;line-height:1.5;font-weight:700;color:#fff;border-radius:4px;
+  padding:1px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-heat0{} .cal-heat1{background:rgba(0,160,233,.07)} .cal-heat2{background:rgba(0,160,233,.16)}
+.cal-heat3{background:rgba(0,104,183,.26)} .cal-heat4{background:rgba(0,64,152,.34)}
+
+/* ============ FORM ============ */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:20px}
+.fld{display:flex;flex-direction:column;gap:7px}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:12.5px;font-weight:700;color:var(--ink2)}
+.fld label .req{color:var(--bad);margin-left:2px}
+.ctrl{border:1.5px solid var(--line);border-radius:10px;padding:11px 13px;font-size:14px;background:#fff;
+  color:var(--ink);transition:.15s;width:100%;outline:none}
+.ctrl:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(0,160,233,.13)}
+.ctrl:disabled{background:var(--wash);color:var(--mute)}
+select.ctrl{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6b7d' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center;padding-right:34px}
+.type-pick{display:flex;flex-wrap:wrap;gap:8px}
+.type-pick button{border:1.5px solid var(--line);border-radius:9px;padding:9px 13px;font-size:12.5px;
+  font-weight:700;color:var(--ink2);display:flex;align-items:center;gap:7px;transition:.15s;background:#fff}
+.type-pick button .d{width:11px;height:11px;border-radius:50%}
+.type-pick button.on{border-color:var(--suhyup);background:var(--wash);color:var(--deep);
+  box-shadow:0 0 0 2px rgba(0,104,183,.1)}
+.form-foot{padding:0 20px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{border-radius:10px;padding:12px 22px;font-size:14px;font-weight:700;transition:.15s;display:inline-flex;
+  align-items:center;gap:8px}
+.btn:active{transform:scale(.98)}
+.btn-pri{background:linear-gradient(135deg,var(--sky),var(--suhyup));color:#fff;box-shadow:0 4px 14px rgba(0,104,183,.3)}
+.btn-pri:disabled{opacity:.5;cursor:not-allowed}
+.btn-gh{background:var(--wash);color:var(--ink2);border:1px solid var(--line)}
+.form-note{font-size:12px;color:var(--mute)}
+
+/* MY LIST */
+.mylist{padding:0 20px 20px}
+.myrow{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);
+  border-radius:11px;margin-bottom:9px;background:#fff;transition:.12s}
+.myrow:hover{border-color:var(--pale);background:var(--wash)}
+.myrow .mtype{width:6px;align-self:stretch;border-radius:4px;min-height:32px}
+.myrow .minfo{flex:1;min-width:0}
+.myrow .mdate{font-weight:800;font-size:14px;color:var(--ink)}
+.myrow .mmeta{font-size:12px;color:var(--mute);margin-top:2px}
+.myrow .mdel{color:var(--bad);background:#fff5f5;border:1px solid #ffd9d9;border-radius:8px;
+  padding:7px 12px;font-size:12px;font-weight:700}
+.myrow .mdel:hover{background:#ffe8e8}
+.empty-mini{text-align:center;color:var(--mute);padding:30px;font-size:13px}
+
+/* ============ STATS ============ */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  box-shadow:var(--shadow-sm);padding:18px}
+.chart-card h3{font-size:14px;font-weight:800;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.chart-card h3 .bar{width:4px;height:15px;background:var(--suhyup);border-radius:3px}
+.chart-box{position:relative;height:240px}
+
+/* ============ MODAL / TOAST ============ */
+.modal{position:fixed;inset:0;z-index:90;background:rgba(10,37,64,.5);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex;animation:fade .2s}
+.modal-card{background:#fff;border-radius:var(--r);width:min(440px,94vw);max-height:80vh;overflow:auto;
+  box-shadow:0 20px 60px rgba(10,37,64,.4)}
+.modal-h{padding:18px 20px;background:linear-gradient(100deg,var(--deep),var(--suhyup));color:#fff;
+  display:flex;align-items:center;justify-content:space-between;position:sticky;top:0}
+.modal-h .mt{font-size:16px;font-weight:800}
+.modal-h .mc2{font-size:12px;color:var(--pale);font-weight:600}
+.modal-h button{color:#fff;font-size:22px;line-height:1;width:30px;height:30px;border-radius:8px}
+.modal-h button:hover{background:rgba(255,255,255,.15)}
+.modal-body{padding:8px 12px 16px}
+.mb-row{display:flex;align-items:center;gap:11px;padding:11px 10px;border-bottom:1px solid #f2f5f9}
+.mb-row:last-child{border:none}
+.mb-row .d{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.mb-row .nm{font-weight:700;font-size:14px}
+.mb-row .tg{margin-left:auto;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;color:#fff}
+.mb-row .tm{font-size:11px;color:var(--mute)}
+
+.toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);z-index:95;
+  background:var(--ink);color:#fff;padding:13px 22px;border-radius:12px;font-size:14px;font-weight:600;
+  box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;transition:.3s;display:flex;align-items:center;gap:10px;
+  pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:#0f7a4f} .toast.err{background:#c0392b}
+
+.foot-note{text-align:center;color:var(--mute);font-size:11.5px;line-height:1.8;padding:24px 20px 10px;
+  border-top:1px solid var(--line);margin-top:10px}
+.foot-note b{color:var(--ink2)}
+
+.loading{display:flex;flex-direction:column;align-items:center;gap:14px;padding:70px 20px;color:var(--mute)}
+.spinner{width:38px;height:38px;border:3px solid var(--line);border-top-color:var(--suhyup);
+  border-radius:50%;animation:spin .8s linear infinite}
+
+@media(max-width:760px){
+  .form-grid{grid-template-columns:1fr}
+  .chart-grid{grid-template-columns:1fr}
+  .topbar h1{font-size:15px}
+  .g-corner,.g-name{width:128px;min-width:128px;flex-basis:128px}
+  .wrap{padding:16px 12px 50px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login">
+  <svg class="sea-wave" viewBox="0 0 1200 220" preserveAspectRatio="none">
+    <path d="M0,120 C150,70 300,170 450,120 C600,70 750,170 900,120 C1050,70 1200,170 1200,120"/>
+    <path d="M0,160 C150,110 300,210 450,160 C600,110 750,210 900,160 C1050,110 1200,210 1200,160" style="opacity:.6"/>
+  </svg>
+  <div class="login-card">
+    <div class="porthole">
+      <svg class="compass" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="46" fill="none" stroke="#9FD9F6" stroke-width="2" opacity=".5"/>
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#9FD9F6" stroke-width="1" opacity=".3"/>
+        <polygon points="50,12 57,50 50,46 43,50" fill="#00A0E9"/>
+        <polygon points="50,88 43,50 50,54 57,50" fill="#9FD9F6"/>
+        <circle cx="50" cy="50" r="5" fill="#fff"/>
+        <text x="50" y="26" text-anchor="middle" fill="#9FD9F6" font-size="8" font-weight="700">N</text>
+      </svg>
+    </div>
+    <div class="brand-kr">수협중앙회 · ICT전략실</div>
+    <h1>휴가 항해일지</h1>
+    <div class="sub">2026년 7월–10월 휴가계획 취합</div>
+    <div class="pw-wrap">
+      <input id="pw" type="password" placeholder="접속 암호를 입력하세요" autocomplete="off" inputmode="text">
+      <button onclick="tryLogin()">승선 →</button>
+    </div>
+    <div class="login-err" id="loginErr">암호가 일치하지 않습니다. 다시 입력해 주세요.</div>
+    <div class="login-foot">내부 직원용 휴가 취합 도구입니다.<br>입력값은 공식 결재·근태 시스템을 대체하지 않습니다.</div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app">
+  <header class="topbar">
+    <div class="topbar-in">
+      <div class="logo-mark">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round">
+          <path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/>
+        </svg>
+      </div>
+      <div>
+        <h1>ICT전략실 휴가 항해일지</h1>
+        <div class="tag">2026 · 7월–10월 휴가계획</div>
+      </div>
+      <div class="spacer"></div>
+      <div class="live-dot" id="liveDot"><i></i><span id="liveText">연결 확인 중…</span></div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-view="timeline"><span class="ico">🧭</span>타임라인</button>
+    <button class="tab" data-view="calendar"><span class="ico">🗓️</span>캘린더</button>
+    <button class="tab" data-view="register"><span class="ico">✍️</span>휴가 등록·관리</button>
+    <button class="tab" data-view="stats"><span class="ico">📊</span>통계</button>
+  </nav>
+
+  <main class="wrap">
+    <!-- summary -->
+    <div class="stat-row" id="statRow"></div>
+
+    <!-- TIMELINE -->
+    <section class="view active" id="view-timeline">
+      <div class="panel">
+        <div class="panel-h">
+          <h2><span class="bar"></span>전체 휴가 타임라인</h2>
+          <span class="desc">막대를 클릭하면 상세 정보가 표시됩니다</span>
+          <div class="right">
+            <div class="seg" id="monthSeg">
+              <button data-m="all" class="on">전체</button>
+              <button data-m="7">7월</button>
+              <button data-m="8">8월</button>
+              <button data-m="9">9월</button>
+              <button data-m="10">10월</button>
+            </div>
+          </div>
+        </div>
+        <div style="padding:12px 20px 0"><div class="chip-row" id="typeLegend"></div></div>
+        <div class="gantt-wrap"><div class="gantt" id="gantt"></div></div>
+      </div>
+    </section>
+
+    <!-- CALENDAR -->
+    <section class="view" id="view-calendar">
+      <div class="panel">
+        <div class="panel-h">
+          <h2><span class="bar"></span>월별 캘린더</h2>
+          <span class="desc">색이 진할수록 휴가 인원이 많습니다 · 날짜 클릭 시 명단 확인</span>
+        </div>
+        <div style="padding:20px"><div class="cal-grid" id="calGrid"></div></div>
+      </div>
+    </section>
+
+    <!-- REGISTER -->
+    <section class="view" id="view-register">
+      <div class="panel">
+        <div class="panel-h"><h2><span class="bar"></span>휴가 등록</h2>
+          <span class="desc">팀과 이름을 선택한 뒤 일정을 저장하세요</span></div>
+        <div class="form-grid">
+          <div class="fld"><label>팀 <span class="req">*</span></label>
+            <select class="ctrl" id="fTeam" onchange="onTeamChange()"><option value="">팀 선택</option></select></div>
+          <div class="fld"><label>이름 <span class="req">*</span></label>
+            <select class="ctrl" id="fName" disabled><option value="">먼저 팀을 선택하세요</option></select></div>
+          <div class="fld full"><label>휴가 구분 <span class="req">*</span></label>
+            <div class="type-pick" id="typePick"></div></div>
+          <div class="fld"><label>시작일 <span class="req">*</span></label>
+            <input type="date" class="ctrl" id="fStart" min="2026-07-01" max="2026-10-31" value="2026-07-01" onchange="onDateChange()"></div>
+          <div class="fld"><label id="endLbl">종료일 <span class="req">*</span></label>
+            <input type="date" class="ctrl" id="fEnd" min="2026-07-01" max="2026-10-31" value="2026-07-01"></div>
+          <div class="fld full"><label>메모 <span style="color:var(--mute);font-weight:500">(선택)</span></label>
+            <input type="text" class="ctrl" id="fMemo" maxlength="40" placeholder="예: 가족여행 / 대체휴무 등"></div>
+        </div>
+        <div class="form-foot">
+          <button class="btn btn-pri" id="saveBtn" onclick="saveVacation()">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 12l5 5L20 7"/></svg>
+            휴가 저장
+          </button>
+          <span class="form-note" id="formNote"></span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><h2><span class="bar"></span>내 휴가 목록</h2>
+          <span class="desc" id="myListDesc">이름을 선택하면 본인 일정이 표시됩니다</span></div>
+        <div class="mylist" id="myList">
+          <div class="empty-mini">위에서 팀·이름을 선택하면 등록된 휴가가 여기 표시됩니다.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS -->
+    <section class="view" id="view-stats">
+      <div class="chart-grid">
+        <div class="chart-card"><h3><span class="bar"></span>팀별 총 휴가일수</h3><div class="chart-box"><canvas id="chTeam"></canvas></div></div>
+        <div class="chart-card"><h3><span class="bar"></span>종일·반차 구성</h3><div class="chart-box"><canvas id="chType"></canvas></div></div>
+        <div class="chart-card"><h3><span class="bar"></span>월별 휴가일수</h3><div class="chart-box"><canvas id="chMonth"></canvas></div></div>
+        <div class="chart-card"><h3><span class="bar"></span>주차별 휴가자 추이</h3><div class="chart-box"><canvas id="chWeek"></canvas></div></div>
+      </div>
+    </section>
+
+    <div class="foot-note">
+      <b>수협중앙회 ICT전략실</b> 내부 휴가 취합용 도구 · 2026년 7~10월<br>
+      본 화면의 일정은 참고용이며, 실제 휴가는 <b>공식 근태·결재 시스템</b>에서 별도 신청·승인되어야 합니다.<br>
+      공휴일·대체공휴일은 정부 공식 발표 기준으로 다시 확인하시기 바랍니다.
+    </div>
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-card">
+    <div class="modal-h"><div><div class="mt" id="modalTitle"></div><div class="mc2" id="modalSub"></div></div>
+      <button onclick="closeModal()">×</button></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   설정 (Configuration)
+   ------------------------------------------------------------
+   ▶ SUPABASE_URL  : Supabase 프로젝트 URL
+                     예) https://abcdefghijkl.supabase.co
+   ▶ SUPABASE_KEY  : Settings → API → anon public 키 (공개 키, 노출 무방)
+   ▶ 두 값이 비어 있으면 "데모 모드"(샘플 데이터, 저장 안 됨)로 동작합니다.
+   ============================================================ */
+const CONFIG = {
+  SUPABASE_URL: "https://supabase.com/dashboard/project/qyxfhtefsyattawxdeqy",                // ← 예: https://abcdefghijkl.supabase.co
+  SUPABASE_KEY: "sb_publishable_uCUY_SrRuOLxmHCpJG8jpQ_bW9hkLgO",                // ← anon public 키
+  PASSWORD: "suhyup1",
+  RANGE_START: "2026-07-01",
+  RANGE_END:   "2026-10-31",
+  DAY_W: 26                        // 타임라인 하루 픽셀 폭
+};
+
+/* 공휴일 (※ 정부 공식 발표 기준 재확인 권장) */
+const HOLIDAYS = {
+  "2026-08-15": "광복절",
+  "2026-09-24": "추석연휴",
+  "2026-09-25": "추석",
+  "2026-09-26": "추석연휴",
+  "2026-09-28": "대체공휴일",
+  "2026-10-03": "개천절",
+  "2026-10-05": "대체공휴일",
+  "2026-10-09": "한글날"
+};
+
+/* 휴가 구분 (종일 / 반차) */
+const TYPES = [
+  { id:"종일",    label:"종일",      color:"#0068B7", days:1   },
+  { id:"오전반차", label:"오전 반차",  color:"#00A0E9", days:0.5 },
+  { id:"오후반차", label:"오후 반차",  color:"#5BBCE4", days:0.5 }
+];
+const TYPE_MAP = Object.fromEntries(TYPES.map(t=>[t.id,t]));
+const isHalf = id => id==="오전반차" || id==="오후반차";
+
+/* 팀 색상 */
+const TEAM_COLORS = {
+  "ICT전략기획팀":"#0068B7","ICT인프라팀":"#00A0E9","ICT경제팀":"#2A9D8F",
+  "ICT정책보험팀":"#A39161","ICT공제보험팀":"#7B6CB0"
+};
+
+/* ============================================================
+   직원 명부 (ICT_인원명부_20260629 기준 · 60명)
+   ============================================================ */
+const ROSTER = [
+  // ICT전략기획팀
+  {team:"ICT전략기획팀",sub:"ICT전략기획팀",name:"김원*"},
+  {team:"ICT전략기획팀",sub:"ICT전략기획팀",name:"강석*"},
+  {team:"ICT전략기획팀",sub:"AI/RPA",name:"김영*"},
+  {team:"ICT전략기획팀",sub:"ICT전략기획",name:"전호*"},
+  {team:"ICT전략기획팀",sub:"ICT전략기획",name:"강병*"},
+  {team:"ICT전략기획팀",sub:"급여정보",name:"김병*"},
+  {team:"ICT전략기획팀",sub:"급여정보",name:"최효*"},
+  {team:"ICT전략기획팀",sub:"회계정보",name:"정종*"},
+  {team:"ICT전략기획팀",sub:"회계정보",name:"정충*"},
+  {team:"ICT전략기획팀",sub:"그룹웨어",name:"김태*"},
+  {team:"ICT전략기획팀",sub:"그룹웨어",name:"김채*"},
+  {team:"ICT전략기획팀",sub:"그룹웨어",name:"이규*"},
+  // ICT인프라팀
+  {team:"ICT인프라팀",sub:"ICT인프라팀",name:"임종*"},
+  {team:"ICT인프라팀",sub:"시스템",name:"박찬*"},
+  {team:"ICT인프라팀",sub:"시스템",name:"송창*"},
+  {team:"ICT인프라팀",sub:"인프라",name:"이태*"},
+  {team:"ICT인프라팀",sub:"인프라",name:"이유*"},
+  {team:"ICT인프라팀",sub:"DB미들웨어",name:"김성*"},
+  {team:"ICT인프라팀",sub:"DB미들웨어",name:"함석*"},
+  // ICT경제팀
+  {team:"ICT경제팀",sub:"ICT경제팀",name:"김*"},
+  {team:"ICT경제팀",sub:"구매정보",name:"양진*"},
+  {team:"ICT경제팀",sub:"구매정보",name:"이국*"},
+  {team:"ICT경제팀",sub:"구매정보",name:"방호*"},
+  {team:"ICT경제팀",sub:"위판정보",name:"안병*"},
+  {team:"ICT경제팀",sub:"직판정보",name:"박철*"},
+  {team:"ICT경제팀",sub:"직판정보",name:"조종*"},
+  {team:"ICT경제팀",sub:"유통가공",name:"황현*"},
+  {team:"ICT경제팀",sub:"유통가공",name:"김빛*"},
+  {team:"ICT경제팀",sub:"유통가공",name:"박연*"},
+  {team:"ICT경제팀",sub:"이커머스",name:"이정*"},
+  {team:"ICT경제팀",sub:"이커머스",name:"임수*"},
+  {team:"ICT경제팀",sub:"이커머스",name:"이성*"},
+  {team:"ICT경제팀",sub:"차세대바다로추진",name:"김상*"},
+  {team:"ICT경제팀",sub:"차세대바다로추진",name:"김다*"},
+  // ICT정책보험팀
+  {team:"ICT정책보험팀",sub:"ICT정책보험팀",name:"이*"},
+  {team:"ICT정책보험팀",sub:"회계자금",name:"조윤*"},
+  {team:"ICT정책보험팀",sub:"회계자금",name:"김민*"},
+  {team:"ICT정책보험팀",sub:"심사보상",name:"문형*"},
+  {team:"ICT정책보험팀",sub:"심사보상",name:"손동*"},
+  {team:"ICT정책보험팀",sub:"계약제도",name:"서준*"},
+  {team:"ICT정책보험팀",sub:"계약제도",name:"이현*"},
+  // ICT공제보험팀
+  {team:"ICT공제보험팀",sub:"ICT공제보험팀",name:"신주*"},
+  {team:"ICT공제보험팀",sub:"영업정보",name:"하상*"},
+  {team:"ICT공제보험팀",sub:"영업정보",name:"김용*"},
+  {team:"ICT공제보험팀",sub:"계리재보",name:"박은*"},
+  {team:"ICT공제보험팀",sub:"변경관리",name:"권혁*"},
+  {team:"ICT공제보험팀",sub:"변경관리",name:"하윤*"},
+  {team:"ICT공제보험팀",sub:"변경관리",name:"이형*"},
+  {team:"ICT공제보험팀",sub:"생명인수",name:"이재*"},
+  {team:"ICT공제보험팀",sub:"생명인수",name:"김형*"},
+  {team:"ICT공제보험팀",sub:"생명인수",name:"장현*"},
+  {team:"ICT공제보험팀",sub:"손해회계",name:"오창*"},
+  {team:"ICT공제보험팀",sub:"손해회계",name:"김상*"},
+  {team:"ICT공제보험팀",sub:"손해회계",name:"권오*"},
+  {team:"ICT공제보험팀",sub:"수납관리",name:"전명*"},
+  {team:"ICT공제보험팀",sub:"수납관리",name:"성유*"},
+  {team:"ICT공제보험팀",sub:"지급관리",name:"이나*"},
+  {team:"ICT공제보험팀",sub:"지급관리",name:"장세*"},
+  {team:"ICT공제보험팀",sub:"사고보상",name:"허민*"},
+  {team:"ICT공제보험팀",sub:"사고보상",name:"홍인*"}
+];
+ROSTER.forEach((p,i)=>{ p.id = p.team+"|"+p.sub+"|"+p.name+"|"+i; });
+const TEAMS = [...new Set(ROSTER.map(p=>p.team))];
+
+/* ============================================================
+   날짜 유틸
+   ============================================================ */
+const DAYS = [];
+(function(){
+  let d = new Date(CONFIG.RANGE_START+"T00:00:00");
+  const end = new Date(CONFIG.RANGE_END+"T00:00:00");
+  while(d<=end){ DAYS.push(new Date(d)); d.setDate(d.getDate()+1); }
+})();
+const fmt = dt => dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+const dayIndex = s => DAYS.findIndex(d=>fmt(d)===s);
+const WD = ["일","월","화","수","목","금","토"];
+const TODAY = fmt(new Date());
+
+/* 상태 */
+let VACATIONS = [];      // {id, team, sub, name, type, start, end, memo}
+let DEMO = false;
+let curMonth = "all";
+let typeFilter = new Set(TYPES.map(t=>t.id));
+let selType = "종일";
+let charts = {};
+/* ============================================================
+   데이터 연동 (Supabase REST API)
+   ============================================================ */
+function sbHeaders(extra){
+  return { "apikey": CONFIG.SUPABASE_KEY,
+    "Authorization": "Bearer " + CONFIG.SUPABASE_KEY,
+    "Content-Type": "application/json", ...extra };
+}
+const SB = () => CONFIG.SUPABASE_URL + "/rest/v1/vacations";
+
+async function loadData(){
+  if(!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_KEY){
+    DEMO = true; VACATIONS = demoData(); setLive(); return;
+  }
+  try{
+    const res = await fetch(SB() + "?select=*&order=start.asc", { headers: sbHeaders() });
+    if(!res.ok) throw new Error(await res.text());
+    VACATIONS = (await res.json()).map(normalize).filter(Boolean);
+    DEMO = false;
+  }catch(e){
+    console.error(e); DEMO = true; VACATIONS = demoData();
+    toast("서버 연결 실패 · 데모 데이터로 표시합니다","err");
+  }
+  setLive();
+}
+function normalize(row){
+  if(!row || !row.name || !row.start) return null;
+  return { id: String(row.id||row.start+row.name),
+    team: row.team||"", sub: row.sub||"", name: row.name,
+    type: row.type||"종일", start: row.start,
+    end: row.end||row.start, memo: row.memo||"" };
+}
+async function pushSave(rec){
+  if(DEMO){ VACATIONS.push(rec); return {status:"success"}; }
+  const res = await fetch(SB(), {
+    method: "POST",
+    headers: sbHeaders({ "Prefer": "return=minimal" }),
+    body: JSON.stringify(rec)
+  });
+  if(!res.ok) throw new Error(await res.text());
+  return {status:"success"};
+}
+async function pushDelete(id){
+  if(DEMO){ VACATIONS = VACATIONS.filter(v=>v.id!==id); return {status:"success"}; }
+  const res = await fetch(SB() + `?id=eq.${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: sbHeaders()
+  });
+  if(!res.ok) throw new Error(await res.text());
+  return {status:"success"};
+}
+function setLive(){
+  const dot=document.getElementById("liveDot"), t=document.getElementById("liveText");
+  if(DEMO){ dot.classList.add("demo"); t.textContent="데모 모드 (미저장)"; }
+  else{ dot.classList.remove("demo"); t.textContent="Supabase 연결됨"; }
+}
+
+/* 데모 샘플 (배포 시 실데이터로 대체됨) */
+function demoData(){
+  const pick=(t,s,n,ty,st,en,m)=>({id:"demo"+Math.random().toString(36).slice(2,8),team:t,sub:s,name:n,type:ty,start:st,end:en,memo:m||""});
+  return [
+    pick("ICT전략기획팀","ICT전략기획","전호*","종일","2026-07-21","2026-07-23","가족여행"),
+    pick("ICT전략기획팀","그룹웨어","김태*","오전반차","2026-07-09","2026-07-09",""),
+    pick("ICT전략기획팀","회계정보","정종*","종일","2026-08-10","2026-08-14","여름휴가"),
+    pick("ICT인프라팀","시스템","박찬*","종일","2026-08-03","2026-08-07","하계휴가"),
+    pick("ICT인프라팀","DB미들웨어","김성*","종일","2026-07-15","2026-07-16",""),
+    pick("ICT경제팀","구매정보","양진*","종일","2026-09-10","2026-09-11",""),
+    pick("ICT경제팀","이커머스","이정*","오후반차","2026-07-31","2026-07-31",""),
+    pick("ICT경제팀","유통가공","황현*","종일","2026-08-17","2026-08-21","여름휴가"),
+    pick("ICT정책보험팀","심사보상","문형*","종일","2026-09-07","2026-09-08",""),
+    pick("ICT정책보험팀","계약제도","서준*","종일","2026-07-28","2026-07-30",""),
+    pick("ICT공제보험팀","생명인수","이재*","종일","2026-08-24","2026-08-28","여름휴가"),
+    pick("ICT공제보험팀","변경관리","권혁*","종일","2026-07-13","2026-07-14",""),
+    pick("ICT공제보험팀","수납관리","전명*","종일","2026-09-21","2026-09-23","추석 연계"),
+    pick("ICT공제보험팀","영업정보","하상*","오전반차","2026-08-13","2026-08-13",""),
+    pick("ICT경제팀","직판정보","박철*","종일","2026-10-12","2026-10-16","가을휴가"),
+    pick("ICT인프라팀","인프라","이태*","오후반차","2026-10-08","2026-10-08","")
+  ];
+}
+
+/* ============================================================
+   로그인
+   ============================================================ */
+function tryLogin(){
+  const v=document.getElementById("pw").value.trim();
+  if(v===CONFIG.PASSWORD){
+    document.getElementById("login").style.display="none";
+    document.getElementById("app").style.display="flex";
+    initApp();
+  }else{
+    document.getElementById("loginErr").classList.add("show");
+    document.getElementById("pw").value="";
+    setTimeout(()=>document.getElementById("loginErr").classList.remove("show"),2400);
+  }
+}
+document.getElementById("pw").addEventListener("keydown",e=>{ if(e.key==="Enter")tryLogin(); });
+
+/* ============================================================
+   앱 초기화
+   ============================================================ */
+async function initApp(){
+  buildTabs(); buildTypeUI(); buildFormSelects();
+  document.getElementById("gantt").innerHTML='<div class="loading"><div class="spinner"></div>휴가 데이터를 불러오는 중…</div>';
+  await loadData();
+  renderAll();
+}
+function renderAll(){
+  renderStats(); renderTimeline(); renderCalendar();
+  if(document.getElementById("view-stats").classList.contains("active")) renderCharts();
+  refreshMyList();
+}
+
+/* 탭 전환 */
+function buildTabs(){
+  document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById("view-"+t.dataset.view).classList.add("active");
+    if(t.dataset.view==="stats") renderCharts();
+  });
+  document.querySelectorAll("#monthSeg button").forEach(b=>b.onclick=()=>{
+    document.querySelectorAll("#monthSeg button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); curMonth=b.dataset.m; renderTimeline();
+  });
+}
+
+/* 유형 범례 + 필터 + 등록 버튼 */
+function buildTypeUI(){
+  const leg=document.getElementById("typeLegend");
+  leg.innerHTML='<span style="font-size:11.5px;font-weight:700;color:var(--mute);margin-right:2px">유형:</span>';
+  TYPES.forEach(t=>{
+    const c=document.createElement("button");
+    c.className="chip"; c.dataset.id=t.id;
+    c.innerHTML=`<span class="dot" style="background:${t.color}"></span>${t.label}`;
+    c.onclick=()=>{ if(typeFilter.has(t.id)){typeFilter.delete(t.id);c.classList.add("off");}
+      else{typeFilter.add(t.id);c.classList.remove("off");} renderTimeline(); };
+    leg.appendChild(c);
+  });
+  const tp=document.getElementById("typePick");
+  TYPES.forEach((t,i)=>{
+    const b=document.createElement("button");
+    b.innerHTML=`<span class="d" style="background:${t.color}"></span>${t.label}`;
+    if(t.id===selType)b.classList.add("on");
+    b.onclick=()=>{ selType=t.id; document.querySelectorAll("#typePick button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on"); onTypeChange(); };
+    tp.appendChild(b);
+  });
+}
+
+/* ============================================================
+   타임라인 (Gantt)
+   ============================================================ */
+function visibleDays(){
+  if(curMonth==="all") return DAYS.map((d,i)=>({d,i}));
+  return DAYS.map((d,i)=>({d,i})).filter(o=>o.d.getMonth()+1===+curMonth);
+}
+function renderTimeline(){
+  const g=document.getElementById("gantt");
+  const vis=visibleDays();
+  if(!vis.length){ g.innerHTML=""; return; }
+  const startI=vis[0].i, w=CONFIG.DAY_W, total=vis.length*w;
+  const data=VACATIONS.filter(v=>typeFilter.has(v.type));
+
+  // 헤더
+  let months={}; vis.forEach(o=>{ const m=o.d.getMonth()+1; (months[m]=months[m]||[]).push(o); });
+  let head=`<div class="g-head"><div class="g-corner">팀 · 성명 (60명)</div><div class="g-months">`;
+  Object.keys(months).forEach(m=>{
+    const arr=months[m], mw=arr.length*w;
+    head+=`<div class="g-month" style="width:${mw}px"><div class="g-month-name">${m}월</div><div class="g-days">`;
+    arr.forEach(o=>{
+      const wd=o.d.getDay(), ds=fmt(o.d);
+      let cls="g-day"; if(wd===0||wd===6)cls+=" we"; if(HOLIDAYS[ds])cls+=" ho"; if(ds===TODAY)cls+=" today";
+      head+=`<div class="${cls}" style="width:${w}px" title="${ds} ${WD[wd]}"><span class="wd">${WD[wd]}</span><span class="dd">${o.d.getDate()}</span></div>`;
+    });
+    head+=`</div></div>`;
+  });
+  head+=`</div></div>`;
+
+  // 본문: 팀별 그룹
+  let body="";
+  TEAMS.forEach(team=>{
+    const members=ROSTER.filter(p=>p.team===team);
+    const tdays=data.filter(v=>v.team===team).reduce((s,v)=>s+vacDays(v),0);
+    body+=`<div class="g-team" style="width:${188+total}px"><div class="g-team-in"><span class="tdot" style="background:${TEAM_COLORS[team]}"></span>${team}<span class="cnt">${members.length}명 · ${fmtDays(tdays)}일</span></div></div>`;
+    members.forEach(p=>{
+      const cells = vis.map(o=>{
+        const wd=o.d.getDay(), ds=fmt(o.d), x=(o.i-startI)*w;
+        if(HOLIDAYS[ds]) return `<div class="g-cellbg ho" style="left:${x}px;width:${w}px"></div>`;
+        if(wd===0||wd===6) return `<div class="g-cellbg we" style="left:${x}px;width:${w}px"></div>`;
+        return "";
+      }).join("");
+      const todayX = vis.find(o=>fmt(o.d)===TODAY) ? `<div class="g-today" style="left:${(dayIndex(TODAY)-startI)*w}px"></div>` : "";
+      const bars = data.filter(v=>v.id && v.name===p.name && v.team===p.team && v.sub===p.sub)
+        .map(v=>barHTML(v,startI,vis,w)).join("");
+      body+=`<div class="g-row"><div class="g-name"><span class="nm">${p.name}</span><span class="sub">${p.sub}</span></div>`+
+            `<div class="g-track" style="width:${total}px">${cells}${todayX}${bars}</div></div>`;
+    });
+  });
+  if(!data.length) body=`<div class="g-empty">표시할 휴가가 없습니다. <b>휴가 등록·관리</b> 탭에서 일정을 추가해 보세요.</div>`;
+  g.innerHTML=head+body;
+}
+function barHTML(v,startI,vis,w){
+  let si=dayIndex(v.start), ei=dayIndex(v.end);
+  if(si<0)si=0; if(ei<0)ei=si;
+  const lastI=vis[vis.length-1].i, firstI=vis[0].i;
+  if(ei<firstI||si>lastI) return "";
+  const cs=Math.max(si,firstI), ce=Math.min(ei,lastI);
+  const left=(cs-startI)*w, width=(ce-cs+1)*w-3;
+  const t=TYPE_MAP[v.type]||TYPES[0];
+  const half=isHalf(v.type)?" half":"";
+  const lbl=width>54 ? t.label.replace(" ","") : "";
+  return `<div class="g-bar${half}" style="left:${left+1.5}px;width:${width}px;background:${t.color}" `+
+    `onclick='showBar(${JSON.stringify(v).replace(/'/g,"&#39;")})'>${lbl}</div>`;
+}
+const vacDays = v => { let d=dayIndex(v.start),e=dayIndex(v.end); if(d<0)return 0; if(e<d)e=d;
+  return isHalf(v.type)?0.5:(e-d+1); };
+const fmtDays = n => Number.isInteger(n)?n:n.toFixed(1);
+
+function showBar(v){
+  const t=TYPE_MAP[v.type]||TYPES[0];
+  openModal(v.name, v.team+" · "+v.sub,
+    `<div class="mb-row"><span class="d" style="background:${t.color}"></span>
+       <span class="nm">${v.type}</span>
+       <span class="tg" style="background:${t.color}">${fmtDays(vacDays(v))}일</span></div>
+     <div class="mb-row"><span class="tm">기간</span><span style="margin-left:auto;font-weight:700">${v.start}${v.end!==v.start?" ~ "+v.end:""}</span></div>
+     ${v.memo?`<div class="mb-row"><span class="tm">메모</span><span style="margin-left:auto">${esc(v.memo)}</span></div>`:""}`);
+}
+/* ============================================================
+   캘린더 (월별 히트맵)
+   ============================================================ */
+function vacOnDay(ds){
+  return VACATIONS.filter(v=>{
+    if(!v.id) return false;
+    let s=dayIndex(v.start), e=dayIndex(v.end), d=dayIndex(ds);
+    if(s<0) return false; if(e<s)e=s;
+    return d>=s && d<=e;
+  });
+}
+function renderCalendar(){
+  const grid=document.getElementById("calGrid");
+  const months=[7,8,9,10]; let html="";
+  months.forEach(m=>{
+    const first=new Date(2026,m-1,1), startWd=first.getDay();
+    const dim=new Date(2026,m,0).getDate();
+    let total=0;
+    let cells="";
+    for(let i=0;i<startWd;i++) cells+=`<div class="cal-day empty"></div>`;
+    for(let day=1;day<=dim;day++){
+      const ds=`2026-${String(m).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+      const dt=new Date(2026,m-1,day), wd=dt.getDay();
+      const vs=vacOnDay(ds); total+=vs.length;
+      const heat=vs.length===0?0:vs.length<=1?1:vs.length<=3?2:vs.length<=5?3:4;
+      let cls="cal-day cal-heat"+heat;
+      if(wd===0)cls+=" sun"; if(wd===6)cls+=" sat";
+      if(HOLIDAYS[ds])cls+=" ho"; if(vs.length)cls+=" has";
+      const mini=vs.map(v=>{const t=TYPE_MAP[v.type]||TYPES[0];
+        const tail=isHalf(v.type)?(v.type==="오전반차"?" (오전)":" (오후)"):"";
+        return `<span style="background:${t.color}" title="${esc(v.name)} · ${esc(v.sub)} · ${v.type}">${esc(v.name)}${tail}</span>`;}).join("");
+      cells+=`<div class="${cls}" ${vs.length?`onclick="showDay('${ds}')"`:""}>
+        <div class="dnum">${day}</div>
+        ${HOLIDAYS[ds]?`<div class="hname">${HOLIDAYS[ds]}</div>`:""}
+        ${vs.length?`<div class="cal-cnt">${vs.length}</div>`:""}
+        <div class="cal-mini">${mini}</div></div>`;
+    }
+    html+=`<div class="cal-month"><div class="cal-mh"><span class="mn">2026년 ${m}월</span>
+      <span class="mc">연 ${total}건</span></div>
+      <div class="cal-week"><span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span></div>
+      <div class="cal-days">${cells}</div></div>`;
+  });
+  grid.innerHTML=html;
+}
+function showDay(ds){
+  const vs=vacOnDay(ds).sort((a,b)=>TEAMS.indexOf(a.team)-TEAMS.indexOf(b.team));
+  const dt=new Date(ds+"T00:00:00");
+  const body=vs.map(v=>{const t=TYPE_MAP[v.type]||TYPES[0];
+    return `<div class="mb-row"><span class="d" style="background:${TEAM_COLORS[v.team]}"></span>
+      <span class="nm">${esc(v.name)}</span>
+      <span class="tm" style="margin-left:6px">${v.sub}</span>
+      <span class="tg" style="background:${t.color}">${v.type}</span></div>`;}).join("");
+  openModal(`${dt.getMonth()+1}월 ${dt.getDate()}일 (${WD[dt.getDay()]})`,
+    `휴가 ${vs.length}명${HOLIDAYS[ds]?" · "+HOLIDAYS[ds]:""}`, body||'<div class="empty-mini">휴가자가 없습니다.</div>');
+}
+
+/* ============================================================
+   휴가 등록 · 관리
+   ============================================================ */
+function buildFormSelects(){
+  const ts=document.getElementById("fTeam");
+  TEAMS.forEach(t=>{const o=document.createElement("option");o.value=t;o.textContent=t;ts.appendChild(o);});
+}
+function onTeamChange(){
+  const team=document.getElementById("fTeam").value;
+  const ns=document.getElementById("fName");
+  ns.innerHTML='<option value="">이름 선택</option>';
+  if(!team){ ns.disabled=true; ns.innerHTML='<option value="">먼저 팀을 선택하세요</option>'; refreshMyList(); return; }
+  ns.disabled=false;
+  ROSTER.filter(p=>p.team===team).forEach(p=>{
+    const o=document.createElement("option"); o.value=p.id;
+    o.textContent=`${p.name} · ${p.sub}`; ns.appendChild(o);
+  });
+  ns.onchange=refreshMyList;
+  refreshMyList();
+}
+function onTypeChange(){
+  const half=isHalf(selType);
+  document.getElementById("fEnd").disabled=half;
+  document.getElementById("endLbl").innerHTML= half?'종료일 <span style="color:var(--mute);font-weight:500">(반차)</span>':'종료일 <span class="req">*</span>';
+  if(half) document.getElementById("fEnd").value=document.getElementById("fStart").value;
+}
+function onDateChange(){
+  const s=document.getElementById("fStart").value, e=document.getElementById("fEnd");
+  if(isHalf(selType)||e.value<s) e.value=s; e.min=s;
+}
+/* 동일인 기존 휴가와 날짜가 겹치는지 검사 (겹치면 충돌 레코드 반환)
+   · 같은 단일 날짜의 오전반차 + 오후반차 조합만 예외 허용 */
+function findConflict(person, type, start, end){
+  const mine = VACATIONS.filter(v=>v.id && v.name===person.name && v.team===person.team && v.sub===person.sub);
+  for(const v of mine){
+    const overlap = start <= v.end && end >= v.start;   // ISO 날짜 문자열 비교
+    if(!overlap) continue;
+    const sameSingleDay = (start===end && v.start===v.end && start===v.start);
+    const bothHalf = isHalf(type) && isHalf(v.type);
+    if(sameSingleDay && bothHalf && type!==v.type) continue; // 오전+오후 반차는 허용
+    return v;
+  }
+  return null;
+}
+async function saveVacation(){
+  const teamSel=document.getElementById("fTeam").value;
+  const pid=document.getElementById("fName").value;
+  const p=ROSTER.find(x=>x.id===pid);
+  const start=document.getElementById("fStart").value;
+  let end=isHalf(selType)?start:document.getElementById("fEnd").value;
+  const memo=document.getElementById("fMemo").value.trim();
+  const note=document.getElementById("formNote");
+  if(!teamSel||!p){ note.textContent="⚠ 팀과 이름을 선택하세요."; note.style.color="var(--bad)"; return; }
+  if(!start||end<start){ note.textContent="⚠ 날짜를 확인하세요."; note.style.color="var(--bad)"; return; }
+  const conflict=findConflict(p,selType,start,end);
+  if(conflict){
+    const range=conflict.start+(conflict.end!==conflict.start?" ~ "+conflict.end:"");
+    note.textContent=`⚠ 이미 등록된 ${range} (${conflict.type}) 일정과 겹칩니다.`;
+    note.style.color="var(--bad)";
+    toast("중복된 날짜는 등록할 수 없습니다","err");
+    return;
+  }
+  const rec={ id:"v"+Date.now()+Math.random().toString(36).slice(2,5),
+    team:p.team, sub:p.sub, name:p.name, type:selType, start, end, memo };
+  const btn=document.getElementById("saveBtn"); btn.disabled=true; note.textContent="저장 중…"; note.style.color="var(--mute)";
+  try{
+    const r=await pushSave(rec);
+    if(r && (r.status==="success"||r.status==="ok")){
+      if(!DEMO) await loadData();
+      renderAll();
+      toast("휴가가 저장되었습니다 ⚓","ok");
+      note.textContent="✓ 저장 완료"; note.style.color="var(--ok)";
+      document.getElementById("fMemo").value="";
+    }else{ throw new Error(r&&r.message||"저장 실패"); }
+  }catch(e){ console.error(e); toast("저장 실패 · 다시 시도하세요","err"); note.textContent="⚠ 저장 실패"; note.style.color="var(--bad)"; }
+  btn.disabled=false;
+}
+function refreshMyList(){
+  const pid=document.getElementById("fName").value;
+  const p=ROSTER.find(x=>x.id===pid);
+  const box=document.getElementById("myList");
+  const desc=document.getElementById("myListDesc");
+  if(!p){ box.innerHTML='<div class="empty-mini">위에서 팀·이름을 선택하면 등록된 휴가가 여기 표시됩니다.</div>';
+    desc.textContent="이름을 선택하면 본인 일정이 표시됩니다"; return; }
+  const mine=VACATIONS.filter(v=>v.id&&v.name===p.name&&v.team===p.team&&v.sub===p.sub)
+    .sort((a,b)=>a.start.localeCompare(b.start));
+  desc.textContent=`${p.name} · ${p.sub} — 총 ${mine.reduce((s,v)=>s+vacDays(v),0)}일 (${mine.length}건)`;
+  if(!mine.length){ box.innerHTML='<div class="empty-mini">등록된 휴가가 없습니다. 위 양식으로 추가하세요.</div>'; return; }
+  box.innerHTML=mine.map(v=>{const t=TYPE_MAP[v.type]||TYPES[0];
+    return `<div class="myrow"><div class="mtype" style="background:${t.color}"></div>
+      <div class="minfo"><div class="mdate">${v.start}${v.end!==v.start?" ~ "+v.end:""}</div>
+      <div class="mmeta">${v.type} · ${fmtDays(vacDays(v))}일${v.memo?" · "+esc(v.memo):""}</div></div>
+      <button class="mdel" onclick="delVac('${v.id}')">삭제</button></div>`;}).join("");
+}
+async function delVac(id){
+  if(!confirm("이 휴가를 삭제할까요?")) return;
+  try{
+    const r=await pushDelete(id);
+    if(r && (r.status==="success"||r.status==="ok")){
+      if(!DEMO) await loadData();
+      renderAll(); toast("삭제되었습니다","ok");
+    }else throw new Error();
+  }catch(e){ toast("삭제 실패 · 다시 시도하세요","err"); }
+}
+
+/* ============================================================
+   통계 (Chart.js)
+   ============================================================ */
+function renderStats(){
+  const recs=VACATIONS.filter(v=>v.id);
+  const totalDays=recs.reduce((s,v)=>s+vacDays(v),0);
+  const ppl=new Set(recs.map(v=>v.team+"|"+v.sub+"|"+v.name)).size;
+  const peak=peakDay();
+  document.getElementById("statRow").innerHTML=`
+    <div class="stat"><div class="k">등록 휴가 건수</div><div class="v">${recs.length}<small>건</small></div></div>
+    <div class="stat s2"><div class="k">총 휴가일수</div><div class="v">${fmtDays(totalDays)}<small>일</small></div></div>
+    <div class="stat s3"><div class="k">휴가 등록 인원</div><div class="v">${ppl}<small>/60명</small></div></div>
+    <div class="stat s4"><div class="k">최다 휴가일</div><div class="v" style="font-size:20px">${peak.label}<small>${peak.n}명</small></div></div>`;
+}
+function peakDay(){
+  let best={label:"-",n:0};
+  DAYS.forEach(d=>{ const ds=fmt(d), n=vacOnDay(ds).length;
+    if(n>best.n) best={label:(d.getMonth()+1)+"/"+d.getDate(), n}; });
+  return best;
+}
+function renderCharts(){
+  if(typeof Chart==="undefined") return;
+  const recs=VACATIONS.filter(v=>v.id);
+  Object.values(charts).forEach(c=>c&&c.destroy()); charts={};
+  Chart.defaults.font.family="'Pretendard','맑은 고딕',sans-serif";
+  Chart.defaults.font.size=12;
+
+  // 팀별
+  const teamDays=TEAMS.map(t=>recs.filter(v=>v.team===t).reduce((s,v)=>s+vacDays(v),0));
+  charts.team=new Chart(document.getElementById("chTeam"),{type:"bar",
+    data:{labels:TEAMS.map(t=>t.replace("ICT","").replace("팀","")),
+      datasets:[{data:teamDays,backgroundColor:TEAMS.map(t=>TEAM_COLORS[t]),borderRadius:7}]},
+    options:chOpt({y:true})});
+  // 유형별
+  const typeCnt=TYPES.map(t=>recs.filter(v=>v.type===t.id).reduce((s,v)=>s+vacDays(v),0)).map(n=>+fmtDays(n));
+  charts.type=new Chart(document.getElementById("chType"),{type:"doughnut",
+    data:{labels:TYPES.map(t=>t.label),datasets:[{data:typeCnt,backgroundColor:TYPES.map(t=>t.color),borderWidth:2,borderColor:"#fff"}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:"58%",
+      plugins:{legend:{position:"right",labels:{boxWidth:12,padding:10,font:{size:11}}}}}});
+  // 월별
+  const mDays=[7,8,9,10].map(m=>recs.reduce((s,v)=>{let d=dayIndex(v.start),e=dayIndex(v.end);if(d<0)return s;if(e<d)e=d;
+    let c=0;for(let i=d;i<=e;i++)if(DAYS[i]&&DAYS[i].getMonth()+1===m)c+=isHalf(v.type)?0.5:1;return s+c;},0));
+  charts.month=new Chart(document.getElementById("chMonth"),{type:"bar",
+    data:{labels:["7월","8월","9월","10월"],datasets:[{data:mDays,backgroundColor:["#9FD9F6","#5BBCE4","#00A0E9","#0068B7"],borderRadius:7}]},
+    options:chOpt({y:true})});
+  // 주차별 휴가자
+  const weeks=weekBuckets();
+  charts.week=new Chart(document.getElementById("chWeek"),{type:"line",
+    data:{labels:weeks.labels,datasets:[{data:weeks.vals,borderColor:"#0068B7",backgroundColor:"rgba(0,104,183,.12)",
+      fill:true,tension:.35,pointRadius:3,pointBackgroundColor:"#0068B7"}]},
+    options:chOpt({y:true})});
+}
+function chOpt(o){return{responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{y:{beginAtZero:true,grid:{color:"#eef2f6"},ticks:{precision:0}},x:{grid:{display:false}}}};}
+function weekBuckets(){
+  const labels=[],vals=[]; let wi=1;
+  for(let i=0;i<DAYS.length;i+=7){
+    const slice=DAYS.slice(i,i+7);
+    const cnt=new Set();
+    slice.forEach(d=>{ vacOnDay(fmt(d)).forEach(v=>cnt.add(v.name+v.team+v.sub)); });
+    labels.push(`${wi}주`); vals.push(cnt.size); wi++;
+  }
+  return {labels,vals};
+}
+
+/* ============================================================
+   유틸 (모달 / 토스트)
+   ============================================================ */
+function openModal(title,sub,body){
+  document.getElementById("modalTitle").textContent=title;
+  document.getElementById("modalSub").textContent=sub;
+  document.getElementById("modalBody").innerHTML=body;
+  document.getElementById("modal").classList.add("show");
+}
+function closeModal(){ document.getElementById("modal").classList.remove("show"); }
+document.addEventListener("keydown",e=>{ if(e.key==="Escape")closeModal(); });
+let toastT;
+function toast(msg,type){
+  const el=document.getElementById("toast");
+  el.className="toast "+(type||"")+" show"; el.textContent=msg;
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),2600);
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+onTypeChange();
+</script>
+</body>
+</html>
